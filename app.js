@@ -77,14 +77,14 @@ function confirmarAgendamento(){
   setTimeout(()=>ir('screen-main'),2000);
 }
 
-function irHistorico(){
-  renderHistorico(); agendamentoSelecionado=null;
+function irAgendamentos(){
+  renderAgendamentos(); agendamentoSelecionado=null;
   document.getElementById('btn-cancelar-ag').style.display='none';
-  ir('screen-historico');
+  ir('screen-agendamentos');
 }
 
-function renderHistorico(){
-  const lista=document.getElementById('historico-lista');
+function renderAgendamentos(){
+  const lista=document.getElementById('agendamentos-lista');
   const ags=getAgendamentos().filter(a=>a.usuarioEmail===usuarioLogado.email);
   if(!ags.length){
     lista.innerHTML='<div class="empty-state"><div class="empty-icon">📅</div><p>Nenhum agendamento encontrado.</p></div>';
@@ -109,7 +109,7 @@ function cancelarAgendamento(){
   setAgendamentos(getAgendamentos().filter(a=>a.id!==agendamentoSelecionado));
   agendamentoSelecionado=null;
   document.getElementById('btn-cancelar-ag').style.display='none';
-  fecharModal('modal-cancelar'); renderHistorico();
+  fecharModal('modal-cancelar'); renderAgendamentos();
   toast('Agendamento cancelado.');
 }
 

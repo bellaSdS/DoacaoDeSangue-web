@@ -188,7 +188,7 @@
   .info-card .label { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
   .info-card .value { font-size: 1rem; font-weight: 500; color: var(--text); margin-top: 0.2rem; }
 
-  /* HISTORICO */
+  /* AGENDAMENTOS */
   .agendamento-item { background: var(--cream); border: 1.5px solid var(--border); border-radius: var(--radius-sm); padding: 0.9rem 1rem; margin-bottom: 0.75rem; display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: all 0.2s; }
   .agendamento-item:hover { border-color: var(--red); background: var(--red-light); }
   .agendamento-item.selected { border-color: var(--red); background: var(--red-light); box-shadow: 0 0 0 3px rgba(192,57,43,0.15); }

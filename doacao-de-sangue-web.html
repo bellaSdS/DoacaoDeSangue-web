@@ -67,7 +67,7 @@
   </div>
   <div class="menu-grid">
     <div class="menu-item" onclick="irAgendar()"><span class="icon">📅</span><span>Agendar Doação</span></div>
-    <div class="menu-item" onclick="irHistorico()"><span class="icon">📋</span><span>Histórico</span></div>
+    <div class="menu-item" onclick="irAgendamentos()"><span class="icon">📋</span><span>Agendamentos</span></div>
     <div class="menu-item" onclick="irPerfil()"><span class="icon">👤</span><span>Meu Perfil</span></div>
     <div class="menu-item" onclick="fazerLogout()"><span class="icon">🚪</span><span>Sair</span></div>
   </div>
@@ -92,14 +92,14 @@
   </div>
 </div>
 
-<!-- HISTORICO -->
-<div class="screen" id="screen-historico">
+<!-- AGENDAMENTOS -->
+<div class="screen" id="screen-agendamentos">
   <div class="card">
     <div class="top-nav">
       <button class="back-btn" onclick="ir('screen-main')">←</button>
       <span class="screen-title">Meus Agendamentos</span>
     </div>
-    <div id="historico-lista" class="scroll-area"></div>
+    <div id="historico-agendamentos" class="scroll-area"></div>
     <button class="btn btn-danger" id="btn-cancelar-ag" style="display:none;" onclick="abrirModalCancelar()">Cancelar agendamento selecionado</button>
   </div>
 </div>
