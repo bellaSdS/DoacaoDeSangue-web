@@ -84,7 +84,7 @@ function irAgendamentos(){
 }
 
 function renderAgendamentos(){
-  const lista=document.getElementById('agendamentos-lista');
+  const lista=document.getElementById('historico-agendamentos');
   const ags=getAgendamentos().filter(a=>a.usuarioEmail===usuarioLogado.email);
   if(!ags.length){
     lista.innerHTML='<div class="empty-state"><div class="empty-icon">📅</div><p>Nenhum agendamento encontrado.</p></div>';
