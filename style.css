@@ -31,7 +31,7 @@
 
   /* LOGIN SCREEN com gradiente do backgroud.xml */
   #screen-login {
-    background: linear-gradient(to bottom, #ffffff 0%, #D32F2F 50%, #4A0E0E 100%);
+    background: linear-gradient(to bottom, #4A0E0E 100%, #D32F2F 50%, #ffffff 0%);
     border-radius: var(--radius);
     padding: 2.5rem 2rem;
     min-height: 520px;
