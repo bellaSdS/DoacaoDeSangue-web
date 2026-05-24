@@ -183,58 +183,133 @@ async function salvarCadastroHemo() {
 let todosHemocentros = [];
 
 async function irBuscarHemocentro() {
+
   document.getElementById('busca-cidade').value = '';
-  document.getElementById('lista-hemocentros').innerHTML =
-    '<div class="empty-state"><div class="empty-icon">🔍</div><p>Digite uma cidade para buscar hemocentros.</p></div>';
 
   // Carrega todos os hemocentros
-  const { data, error } = await client.from('hemocentros').select('*');
-  if (error) { toast('Erro ao carregar hemocentros!'); return; }
+  const { data, error } = await client
+    .from('hemocentros')
+    .select('*');
+
+  if (error) {
+
+    toast('Erro ao carregar hemocentros!');
+    return;
+  }
+
   todosHemocentros = data || [];
+
+  // renderiza TODOS
+  renderListaHemocentros(todosHemocentros);
 
   ir('screen-buscar-hemo');
 }
 
 function filtrarHemocentros() {
-  const termo = document.getElementById('busca-cidade').value.trim().toLowerCase();
-  const lista = document.getElementById('lista-hemocentros');
 
+  const termo =
+    document.getElementById('busca-cidade')
+    .value
+    .trim()
+    .toLowerCase();
+
+  // se vazio → mostra todos
   if (!termo) {
-    lista.innerHTML =
-      '<div class="empty-state"><div class="empty-icon">🔍</div><p>Digite uma cidade para buscar hemocentros.</p></div>';
+
+    renderListaHemocentros(todosHemocentros);
     return;
   }
 
   const filtrados = todosHemocentros.filter(h =>
-    (h.cidade && h.cidade.toLowerCase().includes(termo)) ||
-    (h.endereco && h.endereco.toLowerCase().includes(termo)) ||
-    (h.nome && h.nome.toLowerCase().includes(termo)) ||
-    (h.estado && h.estado.toLowerCase().includes(termo))
+
+    (h.cidade &&
+      h.cidade.toLowerCase().includes(termo))
+
+    ||
+
+    (h.endereco &&
+      h.endereco.toLowerCase().includes(termo))
+
+    ||
+
+    (h.nome &&
+      h.nome.toLowerCase().includes(termo))
+
+    ||
+
+    (h.estado &&
+      h.estado.toLowerCase().includes(termo))
+
   );
 
-  if (!filtrados.length) {
-    lista.innerHTML =
-      '<div class="empty-state"><div class="empty-icon">😔</div><p>Nenhum hemocentro encontrado para "<strong>' + termo + '</strong>".</p></div>';
+  renderListaHemocentros(filtrados);
+}
+
+function renderListaHemocentros(listaHemocentros) {
+
+  const lista =
+    document.getElementById('lista-hemocentros');
+
+  if (!listaHemocentros.length) {
+
+    lista.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">😔</div>
+        <p>Nenhum hemocentro encontrado.</p>
+      </div>
+    `;
+
     return;
   }
 
-  lista.innerHTML = filtrados.map(h => {
+  lista.innerHTML = listaHemocentros.map(h => {
+
     const estoque = h.estoque || {};
-    const alertas = TIPOS_SANGUINEOS.filter(t => (estoque[t] || 0) < LIMITE_CRITICO);
+
+    const alertas =
+      TIPOS_SANGUINEOS.filter(tipo =>
+        (estoque[tipo] || 0) < LIMITE_CRITICO
+      );
+
     const alertaHTML = alertas.length
-      ? `<div class="hemo-alerta-mini">⚠️ Necessita: ${alertas.join(', ')}</div>`
-      : '';
-    return `
-      <div class="hemo-card-busca" onclick="selecionarHemocentro(${h.id})">
-        <div class="hemo-card-info">
-          <div class="hemo-card-nome">${h.nome}</div>
-          <div class="hemo-card-end">📍 ${h.endereco}, ${h.cidade} — ${h.estado}</div>
-          <div class="hemo-card-hor">🕐 ${h.horario}</div>
-          ${alertaHTML}
+      ? `
+        <div class="hemo-alerta-mini">
+          ⚠️ Necessita:
+          ${alertas.join(', ')}
         </div>
-        <div class="hemo-card-arrow">›</div>
+      `
+      : '';
+
+    return `
+      <div class="hemo-card-busca"
+           onclick="selecionarHemocentro(${h.id})">
+
+        <div class="hemo-card-info">
+
+          <div class="hemo-card-nome">
+            ${h.nome}
+          </div>
+
+          <div class="hemo-card-end">
+            📍 ${h.endereco},
+            ${h.cidade} — ${h.estado}
+          </div>
+
+          <div class="hemo-card-hor">
+            🕐 ${h.horario}
+          </div>
+
+          ${alertaHTML}
+
+        </div>
+
+        <div class="hemo-card-arrow">
+          ›
+        </div>
+
       </div>
     `;
+
   }).join('');
 }
 
