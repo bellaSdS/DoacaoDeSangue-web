@@ -261,7 +261,7 @@
       <span>Perfil</span>
     </div>
 
-    <div class="menu-item" onclick="ir('screen-estoque')">
+    <div class="menu-item" onclick="ir('screen-estoque'); abrirEstoque()">
       <div class="icon">🩸</div>
       <span>Controle de Estoque</span>
     </div>
@@ -437,7 +437,7 @@
 </div>
 
 <!-- CONTROLE DE ESTOQUE -->
-<div id="screen-estoque" class="screen" onload="abrirEstoque()">
+<div id="screen-estoque" class="screen">
 
   <div class="top-nav">
     <button class="back-btn" onclick="ir('screen-main-hemo')">
