@@ -5,7 +5,9 @@ const supabase = window.supabase.createClient(
   supabaseUrl,
   supabaseKey
 );
+
 console.log("JS carregou");
+
 let usuarioLogado = null;
 let agendamentoSelecionado = null;
 
@@ -380,3 +382,84 @@ document.querySelectorAll('.modal-overlay')
     });
 
   });
+
+function irEditarPerfil() {
+
+  document.getElementById('edit-nome').value =
+    usuarioLogado.nome;
+
+  document.getElementById('edit-idade').value =
+    usuarioLogado.idade;
+
+  document.getElementById('edit-tipo').value =
+    usuarioLogado.tipo_sanguineo;
+
+  document.getElementById('edit-telefone').value =
+    usuarioLogado.telefone;
+
+  ir('screen-editar-perfil');
+}
+
+async function salvarEdicao() {
+
+  const nome =
+    document.getElementById('edit-nome').value;
+
+  const idade =
+    document.getElementById('edit-idade').value;
+
+  const tipo =
+    document.getElementById('edit-tipo').value;
+
+  const telefone =
+    document.getElementById('edit-telefone').value;
+
+  const { error } = await supabase
+    .from('usuarios')
+    .update({
+      nome,
+      idade,
+      tipo_sanguineo: tipo,
+      telefone
+    })
+    .eq('email', usuarioLogado.email);
+
+  if (error) {
+    toast('Erro ao salvar!');
+    return;
+  }
+
+  usuarioLogado.nome = nome;
+  usuarioLogado.idade = idade;
+  usuarioLogado.tipo_sanguineo = tipo;
+  usuarioLogado.telefone = telefone;
+
+  toast('Perfil atualizado!');
+
+  irPerfil();
+}
+
+function abrirModalExcluir() {
+  abrirModal('modal-excluir');
+}
+
+async function excluirConta() {
+
+  await supabase
+    .from('agendamentos')
+    .delete()
+    .eq('usuario_email', usuarioLogado.email);
+
+  await supabase
+    .from('usuarios')
+    .delete()
+    .eq('email', usuarioLogado.email);
+
+  fecharModal('modal-excluir');
+
+  toast('Conta excluída!');
+
+  setTimeout(() => {
+    fazerLogout();
+  }, 1500);
+}
