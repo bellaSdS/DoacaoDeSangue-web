@@ -5,7 +5,7 @@ const supabase = window.supabase.createClient(
   supabaseUrl,
   supabaseKey
 );
-
+console.log("JS carregou");
 let usuarioLogado = null;
 let agendamentoSelecionado = null;
 
