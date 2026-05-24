@@ -257,6 +257,7 @@ function irAgendar() {
     <div class="hemo-sel-nome">🏥 ${h.nome}</div>
     <div class="hemo-sel-end">📍 ${h.endereco}, ${h.cidade}</div>
     <div class="hemo-sel-hor">🕐 ${h.horario}</div>
+    ${alertaHTML}
   `;
 
   ir('screen-agendar');
