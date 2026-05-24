@@ -1,5 +1,5 @@
 const supabaseUrl = 'https://jecudcxdkgxsfijikach.supabase.co';
-const supabaseKey = 'sb_publishable_PxaejCQl5ylpNDAafFgfeQ_Y6o8fM2M';
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImplY3VkY3hka2d4c2ZpamlrYWNoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk1Mzc1NTIsImV4cCI6MjA5NTExMzU1Mn0.CFO1Z6NcRNxooQeB8ZOfxJ1dZ9cqOHvhyFFNEqPymGY';
 
 const { createClient } = supabase;
 
