@@ -132,7 +132,7 @@ async function salvarCadastro() {
     .select('*')
     .eq('email', email);
 
-  if (existente.length > 0) {
+  if (existente && existente.length > 0){
     toast('E-mail já cadastrado!');
     return;
   }
