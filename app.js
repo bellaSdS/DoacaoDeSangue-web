@@ -536,66 +536,101 @@ async function excluirHemocentro() {
 /* ──────────── ESTOQUE HEMOCENTRO ──────────── */
 function renderAlertasEstoque() {
 
-  const container = document.getElementById('alertas-estoque');
+  renderEstoque();
+  renderAlertasEstoque();
 
-  if (!hemocentroLogado || !hemocentroLogado.estoque) {
-    container.innerHTML = '';
-    return;
-  }
+  ir('screen-estoque');
+}
 
-  const estoque = hemocentroLogado.estoque;
+function renderEstoque() {
 
-  const criticos = TIPOS_SANGUINEOS.filter(tipo =>
-    (estoque[tipo] || 0) < LIMITE_CRITICO
-  );
+  const grid = document.getElementById('estoque-grid');
 
-  if (criticos.length === 0) {
+  const estoque = hemocentroLogado.estoque || {};
 
-    container.innerHTML = `
-      <div class="alerta-escassez"
-           style="background: var(--green-light); border-color: var(--green);">
+  grid.innerHTML = TIPOS_SANGUINEOS.map(tipo => {
 
-        <div class="alerta-icon">
-          ✅
+    const qtd = estoque[tipo] || 0;
+
+    const critico = qtd < LIMITE_CRITICO;
+
+    return `
+      <div class="estoque-item ${critico ? 'critico' : ''}">
+
+        <div class="estoque-tipo">
+          ${tipo}
         </div>
 
-        <div>
-          <strong style="color: var(--green);">
-            Estoque estável
-          </strong>
+        <div class="${critico ? 'estoque-badge-alerta' : 'estoque-badge-ok'}">
+          ${critico ? 'Crítico' : 'Normal'}
+        </div>
 
-          <p>
-            Todos os tipos sanguíneos estão em nível adequado.
-          </p>
+        <div class="estoque-controles">
+
+          <button class="est-btn"
+                  onclick="alterarEstoque('${tipo}', -1)">
+            −
+          </button>
+
+          <input type="number"
+                 id="estoque-${tipo}"
+                 class="est-input ${critico ? 'est-input-critico' : ''}"
+                 value="${qtd}"
+                 min="0">
+
+          <button class="est-btn"
+                  onclick="alterarEstoque('${tipo}', 1)">
+            +
+          </button>
+
         </div>
 
       </div>
     `;
+  }).join('');
+}
 
+function alterarEstoque(tipo, valor) {
+
+  const input = document.getElementById(`estoque-${tipo}`);
+
+  let qtd = parseInt(input.value) || 0;
+
+  qtd += valor;
+
+  if (qtd < 0) qtd = 0;
+
+  input.value = qtd;
+}
+
+async function salvarEstoque() {
+
+  const novoEstoque = {};
+
+  TIPOS_SANGUINEOS.forEach(tipo => {
+
+    novoEstoque[tipo] =
+      parseInt(document.getElementById(`estoque-${tipo}`).value) || 0;
+  });
+
+  const { error } = await client
+    .from('hemocentros')
+    .update({
+      estoque: novoEstoque
+    })
+    .eq('id', hemocentroLogado.id);
+
+  if (error) {
+    toast('Erro ao salvar estoque!');
     return;
   }
 
-  container.innerHTML = `
-    <div class="alerta-escassez">
+  hemocentroLogado.estoque = novoEstoque;
 
-      <div class="alerta-icon">
-        ⚠️
-      </div>
+  renderEstoque();
+  renderAlertasEstoque();
 
-      <div>
-
-        <strong>
-          Estoque crítico
-        </strong>
-
-        <p>
-          Os tipos ${criticos.join(', ')} estão abaixo do nível recomendado.
-        </p>
-
-      </div>
-
-    </div>
-  `;
+  toast('Estoque atualizado!');
 }
 
 /* ──────────── EDITAR PERFIL DOADOR ──────────── */

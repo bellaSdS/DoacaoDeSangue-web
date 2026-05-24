@@ -440,158 +440,35 @@
 <div id="screen-estoque" class="screen">
 
   <div class="top-nav">
-
-    <button class="back-btn"
-            onclick="ir('screen-main-hemo')">
+    <button class="back-btn" onclick="ir('screen-main-hemo')">
       ←
     </button>
 
     <h1 class="screen-title">
       Controle de Estoque
     </h1>
-
   </div>
 
   <div class="card">
 
-    <!-- ALERTAS -->
+    <!-- ALERTAS DINÂMICOS -->
     <div class="alertas-container" id="alertas-estoque"></div>
 
     <hr class="divider">
 
-    <!-- CABEÇALHO -->
     <div class="estoque-header">
-
       <div class="section-label">
         Estoque de bolsas
       </div>
 
-      <button class="btn-salvar-estoque">
+      <button class="btn-salvar-estoque"
+              onclick="salvarEstoque()">
         Salvar
       </button>
-
     </div>
 
-    <!-- GRID DE ESTOQUE -->
-    <div class="estoque-grid">
-
-      <!-- A+ -->
-      <div class="estoque-item">
-
-        <div class="estoque-tipo">
-          A+
-        </div>
-
-        <div class="estoque-badge-ok">
-          Normal
-        </div>
-
-        <div class="estoque-controles">
-
-          <button class="est-btn">
-            −
-          </button>
-
-          <input type="number"
-                 class="est-input"
-                 value="12">
-
-          <button class="est-btn">
-            +
-          </button>
-
-        </div>
-
-      </div>
-
-      <!-- O- -->
-      <div class="estoque-item critico">
-
-        <div class="estoque-tipo">
-          O-
-        </div>
-
-        <div class="estoque-badge-alerta">
-          Crítico
-        </div>
-
-        <div class="estoque-controles">
-
-          <button class="est-btn">
-            −
-          </button>
-
-          <input type="number"
-                 class="est-input est-input-critico"
-                 value="2">
-
-          <button class="est-btn">
-            +
-          </button>
-
-        </div>
-
-      </div>
-
-      <!-- AB- -->
-      <div class="estoque-item critico">
-
-        <div class="estoque-tipo">
-          AB-
-        </div>
-
-        <div class="estoque-badge-alerta">
-          Crítico
-        </div>
-
-        <div class="estoque-controles">
-
-          <button class="est-btn">
-            −
-          </button>
-
-          <input type="number"
-                 class="est-input est-input-critico"
-                 value="1">
-
-          <button class="est-btn">
-            +
-          </button>
-
-        </div>
-
-      </div>
-
-      <!-- B+ -->
-      <div class="estoque-item">
-
-        <div class="estoque-tipo">
-          B+
-        </div>
-
-        <div class="estoque-badge-ok">
-          Normal
-        </div>
-
-        <div class="estoque-controles">
-
-          <button class="est-btn">
-            −
-          </button>
-
-          <input type="number"
-                 class="est-input"
-                 value="9">
-
-          <button class="est-btn">
-            +
-          </button>
-
-        </div>
-
-      </div>
-
-    </div>
+    <!-- GRID TIPOS SANGUINEOS -->
+    <div class="estoque-grid" id="estoque-grid"></div>
 
   </div>
 
