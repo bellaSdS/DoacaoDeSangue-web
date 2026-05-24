@@ -1,12 +1,14 @@
 const supabaseUrl = 'https://jecudcxdkgxsfijikach.supabase.co';
 const supabaseKey = 'sb_publishable_PxaejCQl5ylpNDAafFgfeQ_Y6o8fM2M';
 
-const supabase = window.supabase.createClient(
+const { createClient } = supabase;
+
+const client = createClient(
   supabaseUrl,
   supabaseKey
 );
 
-console.log("JS carregou");
+console.log("Supabase conectado");
 
 let usuarioLogado = null;
 let agendamentoSelecionado = null;
