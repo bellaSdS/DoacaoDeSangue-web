@@ -240,7 +240,7 @@
 </div>
 
 <!-- MENU DO HEMOCENTRO -->
-<div id="screen-main-hemo" class="screen active">
+<div id="screen-main-hemo" class="screen">
 
   <div class="menu-header hemo-header">
     <p>Bem-vindo</p>
@@ -250,19 +250,19 @@
   <div class="menu-grid">
 
     <!-- PERFIL -->
-    <div class="menu-item" onclick="abrirTela('perfil-hemo')">
+    <div class="menu-item" onclick="ir('screen-perfil-hemo')">
       <div class="icon">🏥</div>
       <span>Perfil</span>
     </div>
 
     <!-- CONTROLE DE ESTOQUE -->
-    <div class="menu-item" onclick="abrirTela('estoque')">
+    <div class="menu-item" onclick="ir('screen-estoque')">
       <div class="icon">🩸</div>
       <span>Controle de Estoque</span>
     </div>
 
     <!-- AGENDAMENTOS -->
-    <div class="menu-item" onclick="abrirTela('agendamentos-hemo')">
+    <div class="menu-item" onclick="ir('screen-agendamentos-hemo')">
       <div class="icon">📅</div>
       <span>Agendamentos</span>
     </div>
@@ -280,7 +280,7 @@
 <div id="screen-perfil-hemo" class="screen">
 
   <div class="top-nav">
-    <button class="back-btn" onclick="abrirTela('menu-hemo')">
+    <button class="back-btn" onclick="ir('screen-main-hemo')">
       ←
     </button>
 

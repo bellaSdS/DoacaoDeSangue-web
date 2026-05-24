@@ -254,10 +254,12 @@ function irAgendar() {
 
   const h = hemocentroSelecionado;
   document.getElementById('hemo-selecionado-info').innerHTML = `
-    <div class="hemo-sel-nome">🏥 ${h.nome}</div>
-    <div class="hemo-sel-end">📍 ${h.endereco}, ${h.cidade}</div>
-    <div class="hemo-sel-hor">🕐 ${h.horario}</div>
-    ${alertaHTML}
+    <div class="hemo-card-info">
+      <div class="hemo-card-nome">${h.nome}</div>
+      <div class="hemo-card-end">📍 ${h.endereco}, ${h.cidade} — ${h.estado}</div>
+      <div class="hemo-card-hor">🕐 ${h.horario}</div>
+      ${alertaHTML}
+    </div>
   `;
 
   ir('screen-agendar');
