@@ -657,6 +657,46 @@ async function salvarEstoque() {
   toast('Estoque atualizado!');
 }
 
+function renderAlertasEstoque() {
+
+  const container =
+    document.getElementById('alertas-estoque');
+
+  const estoque =
+    hemocentroLogado.estoque || {};
+
+  const tiposCriticos =
+    TIPOS_SANGUINEOS.filter(tipo => {
+
+      return (estoque[tipo] || 0) < LIMITE_CRITICO;
+
+    });
+
+  // sem alertas
+  if (tiposCriticos.length === 0) {
+
+    container.innerHTML = `
+      <div class="alerta-ok">
+        ✅ Todos os estoques estão normais.
+      </div>
+    `;
+
+    return;
+  }
+
+  // com alertas
+  container.innerHTML = tiposCriticos.map(tipo => {
+
+    return `
+      <div class="alerta-item">
+        ⚠️ Estoque crítico:
+        <strong>${tipo}</strong>
+      </div>
+    `;
+
+  }).join('');
+}
+
 /* ──────────── EDITAR PERFIL DOADOR ──────────── */
 
 function irEditarPerfil() {
