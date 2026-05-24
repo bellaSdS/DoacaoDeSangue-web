@@ -550,7 +550,7 @@ function renderEstoque() {
 
   grid.innerHTML = TIPOS_SANGUINEOS.map(tipo => {
 
-    const qtd = estoque[tipo] || 0;
+    const qtd = estoque[tipo];
 
     const critico = qtd < LIMITE_CRITICO;
 
@@ -575,7 +575,7 @@ function renderEstoque() {
           <input type="number"
                  id="estoque-${tipo}"
                  class="est-input ${critico ? 'est-input-critico' : ''}"
-                 value="${qtd}"
+                  value="${qtd ?? ''}"
                  min="0">
 
           <button class="est-btn"
@@ -610,9 +610,13 @@ async function salvarEstoque() {
   TIPOS_SANGUINEOS.forEach(tipo => {
 
     novoEstoque[tipo] =
-      parseInt(document.getElementById(`estoque-${tipo}`).value) || 0;
+      parseInt(
+        document.getElementById(`estoque-${tipo}`).value
+      ) || 0;
+
   });
 
+  // salva no banco
   const { error } = await client
     .from('hemocentros')
     .update({
@@ -620,16 +624,36 @@ async function salvarEstoque() {
     })
     .eq('id', hemocentroLogado.id);
 
+  // erro
   if (error) {
+
     toast('Erro ao salvar estoque!');
     return;
   }
 
+  // atualiza objeto local
   hemocentroLogado.estoque = novoEstoque;
 
+  // rerender
   renderEstoque();
   renderAlertasEstoque();
 
+  // mensagem visual
+  const msg =
+    document.getElementById("mensagem-estoque");
+
+  msg.innerHTML =
+    "✅ Estoque atualizado com sucesso!";
+
+  msg.classList.add("show");
+
+  setTimeout(() => {
+
+    msg.classList.remove("show");
+
+  }, 3000);
+
+  // toast
   toast('Estoque atualizado!');
 }
 
