@@ -534,7 +534,7 @@ async function excluirHemocentro() {
 }
 
 /* ──────────── ESTOQUE HEMOCENTRO ──────────── */
-function renderAlertasEstoque() {
+function abrirEstoque(){
 
   renderEstoque();
   renderAlertasEstoque();
