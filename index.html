@@ -29,15 +29,39 @@
     <button class="btn btn-primary" onclick="fazerLogin()">Entrar</button>
   </div>
   <div class="login-link">
-    <a href="#" onclick="ir('screen-cadastro'); return false;">Caso não tenha cadastro, clique aqui</a>
+    <a href="#" onclick="ir('screen-escolha-cadastro'); return false;">Caso não tenha cadastro, clique aqui</a>
   </div>
 </div>
 
-<!-- CADASTRO -->
-<div class="screen" id="screen-cadastro">
+<!-- ESCOLHA DE CADASTRO -->
+<div class="screen" id="screen-escolha-cadastro">
   <div class="card">
     <div class="top-nav">
       <button class="back-btn" onclick="ir('screen-login')">←</button>
+      <span class="screen-title">Criar Conta</span>
+    </div>
+    <p style="color:var(--text-muted);font-size:0.9rem;margin-bottom:1.5rem;">Como deseja se cadastrar?</p>
+    <div class="escolha-grid">
+      <div class="escolha-card" onclick="ir('screen-cadastro')">
+        <span class="escolha-icon">🩸</span>
+        <h3>Doador</h3>
+        <p>Quero me cadastrar para realizar doações de sangue</p>
+      </div>
+      <div class="escolha-card" onclick="ir('screen-cadastro-hemo')">
+        <span class="escolha-icon">🏥</span>
+        <h3>Hemocentro</h3>
+        <p>Sou um hemocentro e quero gerenciar doações</p>
+      </div>
+    </div>
+    <button class="btn btn-secondary" onclick="ir('screen-login')">Já tenho conta</button>
+  </div>
+</div>
+
+<!-- CADASTRO DOADOR -->
+<div class="screen" id="screen-cadastro">
+  <div class="card">
+    <div class="top-nav">
+      <button class="back-btn" onclick="ir('screen-escolha-cadastro')">←</button>
       <span class="screen-title">Novo Cadastro</span>
     </div>
     <div class="form-group"><label>Nome completo</label><input type="text" id="cad-nome" placeholder="Seu nome"></div>
@@ -58,7 +82,45 @@
   </div>
 </div>
 
-<!-- MAIN MENU -->
+<!-- CADASTRO HEMOCENTRO -->
+<div class="screen" id="screen-cadastro-hemo">
+  <div class="card">
+    <div class="top-nav">
+      <button class="back-btn" onclick="ir('screen-escolha-cadastro')">←</button>
+      <span class="screen-title">Cadastro Hemocentro</span>
+    </div>
+    <div class="form-group"><label>Nome do hemocentro</label><input type="text" id="hemo-nome" placeholder="Ex: Hemocentro Central SP"></div>
+    <div class="form-group"><label>CNPJ</label><input type="text" id="hemo-cnpj" placeholder="00.000.000/0000-00"></div>
+    <div class="form-group"><label>Responsável técnico</label><input type="text" id="hemo-responsavel" placeholder="Nome do responsável"></div>
+    <div class="form-group"><label>Telefone</label><input type="tel" id="hemo-telefone" placeholder="(11) 3333-4444"></div>
+    <div class="form-group"><label>Endereço completo</label><input type="text" id="hemo-endereco" placeholder="Rua, número, bairro"></div>
+    <div class="input-row">
+      <div class="form-group"><label>Cidade</label><input type="text" id="hemo-cidade" placeholder="São Paulo"></div>
+      <div class="form-group"><label>Estado</label>
+        <select id="hemo-estado">
+          <option value="">UF</option>
+          <option>AC</option><option>AL</option><option>AP</option><option>AM</option>
+          <option>BA</option><option>CE</option><option>DF</option><option>ES</option>
+          <option>GO</option><option>MA</option><option>MT</option><option>MS</option>
+          <option>MG</option><option>PA</option><option>PB</option><option>PR</option>
+          <option>PE</option><option>PI</option><option>RJ</option><option>RN</option>
+          <option>RS</option><option>RO</option><option>RR</option><option>SC</option>
+          <option selected>SP</option><option>SE</option><option>TO</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group"><label>E-mail</label><input type="email" id="hemo-email" placeholder="contato@hemocentro.com"></div>
+    <div class="input-row">
+      <div class="form-group"><label>Senha</label><input type="password" id="hemo-senha" placeholder="••••••"></div>
+      <div class="form-group"><label>Confirmar</label><input type="password" id="hemo-confirmar" placeholder="••••••"></div>
+    </div>
+    <div class="form-group"><label>Horário de atendimento</label><input type="text" id="hemo-horario" placeholder="Seg–Sex, 7h–17h"></div>
+    <button class="btn btn-primary" onclick="salvarCadastroHemo()">Cadastrar hemocentro</button>
+    <button class="btn btn-secondary" onclick="ir('screen-login')">Já tenho conta</button>
+  </div>
+</div>
+
+<!-- MAIN MENU (DOADOR) -->
 <div class="screen" id="screen-main">
   <div class="menu-header">
     <p>Bem-vindo(a),</p>
@@ -66,25 +128,60 @@
     <span class="blood-type-badge" id="main-tipo">—</span>
   </div>
   <div class="menu-grid">
-    <div class="menu-item" onclick="irAgendar()"><span class="icon">📅</span><span>Agendar Doação</span></div>
+    <div class="menu-item" onclick="irBuscarHemocentro()"><span class="icon">📅</span><span>Agendar Doação</span></div>
     <div class="menu-item" onclick="irAgendamentos()"><span class="icon">📋</span><span>Agendamentos</span></div>
     <div class="menu-item" onclick="irPerfil()"><span class="icon">👤</span><span>Meu Perfil</span></div>
     <div class="menu-item" onclick="fazerLogout()"><span class="icon">🚪</span><span>Sair</span></div>
   </div>
 </div>
 
-<!-- AGENDAR -->
-<div class="screen" id="screen-agendar">
+<!-- MAIN MENU (HEMOCENTRO) -->
+<div class="screen" id="screen-main-hemo">
+  <div class="menu-header hemo-header">
+    <p>Painel do Hemocentro</p>
+    <h2 id="main-hemo-nome">Hemocentro</h2>
+    <span class="blood-type-badge" id="main-hemo-cidade">—</span>
+  </div>
+  <div class="menu-grid">
+    <div class="menu-item" onclick="irPerfilHemo()"><span class="icon">🏥</span><span>Perfil & Estoque</span></div>
+    <div class="menu-item" onclick="irAgendamentosHemo()"><span class="icon">📋</span><span>Agendamentos</span></div>
+    <div class="menu-item" onclick="irEditarHemo()"><span class="icon">✏️</span><span>Editar Dados</span></div>
+    <div class="menu-item" onclick="fazerLogout()"><span class="icon">🚪</span><span>Sair</span></div>
+  </div>
+</div>
+
+<!-- BUSCAR HEMOCENTRO (antes de agendar) -->
+<div class="screen" id="screen-buscar-hemo">
   <div class="card">
     <div class="top-nav">
       <button class="back-btn" onclick="ir('screen-main')">←</button>
+      <span class="screen-title">Buscar Hemocentro</span>
+    </div>
+    <div class="busca-container">
+      <div class="form-group">
+        <label>Cidade ou endereço</label>
+        <div class="busca-input-row">
+          <input type="text" id="busca-cidade" placeholder="Ex: São Paulo, Campinas..." oninput="filtrarHemocentros()">
+          <button class="btn-busca" onclick="filtrarHemocentros()">🔍</button>
+        </div>
+      </div>
+    </div>
+    <div id="lista-hemocentros" class="scroll-area hemo-lista">
+      <div class="empty-state"><div class="empty-icon">🔍</div><p>Digite uma cidade para buscar hemocentros.</p></div>
+    </div>
+  </div>
+</div>
+
+<!-- AGENDAR (após selecionar hemocentro) -->
+<div class="screen" id="screen-agendar">
+  <div class="card">
+    <div class="top-nav">
+      <button class="back-btn" onclick="ir('screen-buscar-hemo')">←</button>
       <span class="screen-title">Agendar Doação</span>
     </div>
+    <div class="hemo-selecionado-card" id="hemo-selecionado-info"></div>
     <div class="form-group"><label>Data</label><input type="date" id="ag-data"></div>
     <div class="form-group"><label>Horário</label><input type="time" id="ag-horario"></div>
-    <div class="form-group"><label>Unidade de coleta</label>
-      <select id="ag-local"><option>Unidade A — Centro</option><option>Unidade B — Zona Norte</option><option>Unidade C — Zona Sul</option></select>
-    </div>
     <hr class="divider">
     <p class="section-label">Requisitos para doação</p>
     <div class="requisitos">✔ Ter entre 16 e 69 anos<br>✔ Pesar mais de 50 kg<br>✔ Estar bem de saúde<br>✔ Não estar em jejum</div>
@@ -92,7 +189,7 @@
   </div>
 </div>
 
-<!-- AGENDAMENTOS -->
+<!-- AGENDAMENTOS (DOADOR) -->
 <div class="screen" id="screen-agendamentos">
   <div class="card">
     <div class="top-nav">
@@ -104,7 +201,18 @@
   </div>
 </div>
 
-<!-- PERFIL -->
+<!-- AGENDAMENTOS (HEMOCENTRO) -->
+<div class="screen" id="screen-agendamentos-hemo">
+  <div class="card">
+    <div class="top-nav">
+      <button class="back-btn" onclick="ir('screen-main-hemo')">←</button>
+      <span class="screen-title">Agendamentos</span>
+    </div>
+    <div id="lista-agendamentos-hemo" class="scroll-area"></div>
+  </div>
+</div>
+
+<!-- PERFIL DOADOR -->
 <div class="screen" id="screen-perfil">
   <div class="card">
     <div class="top-nav">
@@ -126,7 +234,46 @@
   </div>
 </div>
 
-<!-- EDITAR PERFIL -->
+<!-- PERFIL HEMOCENTRO -->
+<div class="screen" id="screen-perfil-hemo">
+  <div class="card">
+    <div class="top-nav">
+      <button class="back-btn" onclick="ir('screen-main-hemo')">←</button>
+      <span class="screen-title">Perfil & Estoque</span>
+    </div>
+
+    <!-- Dados do hemocentro -->
+    <div class="perfil-info">
+      <div class="perfil-avatar hemo-avatar" id="hemo-avatar-initials">H</div>
+      <h2 id="hemo-perfil-nome">—</h2>
+      <p id="hemo-perfil-endereco">—</p>
+      <span class="blood-badge" id="hemo-perfil-cidade">—</span>
+    </div>
+    <div class="info-grid" style="margin-bottom:1.5rem;">
+      <div class="info-card"><div class="label">Responsável</div><div class="value" id="hemo-perfil-resp">—</div></div>
+      <div class="info-card"><div class="label">Telefone</div><div class="value" id="hemo-perfil-tel">—</div></div>
+      <div class="info-card"><div class="label">Horário</div><div class="value" id="hemo-perfil-horario">—</div></div>
+      <div class="info-card"><div class="label">E-mail</div><div class="value" id="hemo-perfil-email" style="font-size:0.8rem;">—</div></div>
+    </div>
+
+    <!-- Controle de Estoque -->
+    <div class="estoque-section">
+      <div class="estoque-header">
+        <span class="section-label" style="margin:0;">🩸 Controle de Estoque</span>
+        <button class="btn-salvar-estoque" onclick="salvarEstoque()">Salvar</button>
+      </div>
+
+      <!-- Alertas de escassez -->
+      <div id="alertas-escassez" class="alertas-container" style="display:none;"></div>
+
+      <div class="estoque-grid" id="estoque-grid">
+        <!-- Preenchido via JS -->
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- EDITAR PERFIL DOADOR -->
 <div class="screen" id="screen-editar-perfil">
   <div class="card">
     <div class="top-nav">
@@ -143,6 +290,37 @@
     <div class="form-group"><label>Telefone</label><input type="tel" id="edit-telefone"></div>
     <button class="btn btn-primary" onclick="salvarEdicao()">Salvar alterações</button>
     <button class="btn btn-secondary" onclick="ir('screen-perfil')">Cancelar</button>
+  </div>
+</div>
+
+<!-- EDITAR HEMOCENTRO -->
+<div class="screen" id="screen-editar-hemo">
+  <div class="card">
+    <div class="top-nav">
+      <button class="back-btn" onclick="ir('screen-main-hemo')">←</button>
+      <span class="screen-title">Editar Hemocentro</span>
+    </div>
+    <div class="form-group"><label>Nome do hemocentro</label><input type="text" id="edit-hemo-nome"></div>
+    <div class="form-group"><label>Responsável técnico</label><input type="text" id="edit-hemo-responsavel"></div>
+    <div class="form-group"><label>Telefone</label><input type="tel" id="edit-hemo-telefone"></div>
+    <div class="form-group"><label>Endereço completo</label><input type="text" id="edit-hemo-endereco"></div>
+    <div class="input-row">
+      <div class="form-group"><label>Cidade</label><input type="text" id="edit-hemo-cidade"></div>
+      <div class="form-group"><label>Estado</label>
+        <select id="edit-hemo-estado">
+          <option>AC</option><option>AL</option><option>AP</option><option>AM</option>
+          <option>BA</option><option>CE</option><option>DF</option><option>ES</option>
+          <option>GO</option><option>MA</option><option>MT</option><option>MS</option>
+          <option>MG</option><option>PA</option><option>PB</option><option>PR</option>
+          <option>PE</option><option>PI</option><option>RJ</option><option>RN</option>
+          <option>RS</option><option>RO</option><option>RR</option><option>SC</option>
+          <option>SP</option><option>SE</option><option>TO</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group"><label>Horário de atendimento</label><input type="text" id="edit-hemo-horario"></div>
+    <button class="btn btn-primary" onclick="salvarEdicaoHemo()">Salvar alterações</button>
+    <button class="btn btn-secondary" onclick="ir('screen-main-hemo')">Cancelar</button>
   </div>
 </div>
 
