@@ -2,470 +2,605 @@ const supabaseUrl = 'https://jecudcxdkgxsfijikach.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImplY3VkY3hka2d4c2ZpamlrYWNoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk1Mzc1NTIsImV4cCI6MjA5NTExMzU1Mn0.CFO1Z6NcRNxooQeB8ZOfxJ1dZ9cqOHvhyFFNEqPymGY';
 
 const { createClient } = supabase;
-
-const client = createClient(
-  supabaseUrl,
-  supabaseKey
-);
+const client = createClient(supabaseUrl, supabaseKey);
 
 console.log("Supabase conectado");
 
 let usuarioLogado = null;
+let hemocentroLogado = null;
 let agendamentoSelecionado = null;
+let hemocentroSelecionado = null;
 
-/* NAVEGAÇÃO */
+const TIPOS_SANGUINEOS = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
+const LIMITE_CRITICO = 5; // bolsas abaixo deste valor disparam alerta
+
+/* ──────────── NAVEGAÇÃO ──────────── */
 
 function ir(id) {
-  document.querySelectorAll('.screen')
-    .forEach(s => s.classList.remove('active'));
-
-  document.getElementById(id)
-    .classList.add('active');
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
 }
 
-/* TOAST */
+/* ──────────── TOAST ──────────── */
 
 function toast(msg, dur = 3000) {
   const t = document.getElementById('toast');
-
   t.textContent = msg;
   t.classList.add('show');
-
-  setTimeout(() => {
-    t.classList.remove('show');
-  }, dur);
+  setTimeout(() => t.classList.remove('show'), dur);
 }
 
-/* LOGIN */
+/* ──────────── LOGIN ──────────── */
 
 async function fazerLogin() {
-
   const email = document.getElementById('login-email').value.trim();
-
   const senha = document.getElementById('login-senha').value;
 
-  if (!email || !senha) {
-    toast('Preencha todos os campos!');
-    return;
-  }
+  if (!email || !senha) { toast('Preencha todos os campos!'); return; }
 
-  const { data: user, error } = await client
+  // Tenta login como doador
+  const { data: user } = await client
     .from('usuarios')
     .select('*')
     .eq('email', email)
     .eq('senha', senha)
     .maybeSingle();
 
-  if (error || !user) {
-    toast('E-mail ou senha incorretos!');
+  if (user) {
+    usuarioLogado = user;
+    hemocentroLogado = null;
+    abrirMain();
+    limparLogin();
     return;
   }
 
-  usuarioLogado = user;
+  // Tenta login como hemocentro
+  const { data: hemo } = await client
+    .from('hemocentros')
+    .select('*')
+    .eq('email', email)
+    .eq('senha', senha)
+    .maybeSingle();
 
-  abrirMain();
+  if (hemo) {
+    hemocentroLogado = hemo;
+    usuarioLogado = null;
+    abrirMainHemo();
+    limparLogin();
+    return;
+  }
+
+  toast('E-mail ou senha incorretos!');
 }
 
-/* MAIN */
-
-function abrirMain() {
-
-  document.getElementById('main-nome').textContent =
-    usuarioLogado.nome;
-
-  document.getElementById('main-tipo').textContent =
-    usuarioLogado.tipo_sanguineo;
-
-  ir('screen-main');
-
+function limparLogin() {
   document.getElementById('login-email').value = '';
   document.getElementById('login-senha').value = '';
 }
 
+/* ──────────── MAIN DOADOR ──────────── */
+
+function abrirMain() {
+  document.getElementById('main-nome').textContent = usuarioLogado.nome;
+  document.getElementById('main-tipo').textContent = usuarioLogado.tipo_sanguineo;
+  ir('screen-main');
+}
+
+/* ──────────── MAIN HEMOCENTRO ──────────── */
+
+function abrirMainHemo() {
+  document.getElementById('main-hemo-nome').textContent = hemocentroLogado.nome;
+  document.getElementById('main-hemo-cidade').textContent =
+    hemocentroLogado.cidade + ' — ' + hemocentroLogado.estado;
+  ir('screen-main-hemo');
+}
+
+/* ──────────── LOGOUT ──────────── */
+
 function fazerLogout() {
   usuarioLogado = null;
+  hemocentroLogado = null;
   ir('screen-login');
 }
 
-/* CADASTRO */
+/* ──────────── CADASTRO DOADOR ──────────── */
 
 async function salvarCadastro() {
-
-  const nome =
-    document.getElementById('cad-nome').value.trim();
-
-  const idade =
-    document.getElementById('cad-idade').value;
-
-  const tipo =
-    document.getElementById('cad-tipo').value;
-
-  const telefone =
-    document.getElementById('cad-telefone').value.trim();
-
-  const email =
-    document.getElementById('cad-email').value.trim();
-
-  const senha =
-    document.getElementById('cad-senha').value;
-
-  const confirmar =
-    document.getElementById('cad-confirmar').value;
+  const nome      = document.getElementById('cad-nome').value.trim();
+  const idade     = document.getElementById('cad-idade').value;
+  const tipo      = document.getElementById('cad-tipo').value;
+  const telefone  = document.getElementById('cad-telefone').value.trim();
+  const email     = document.getElementById('cad-email').value.trim();
+  const senha     = document.getElementById('cad-senha').value;
+  const confirmar = document.getElementById('cad-confirmar').value;
 
   if (!nome || !idade || !tipo || !telefone || !email || !senha) {
-    toast('Preencha todos os campos!');
-    return;
+    toast('Preencha todos os campos!'); return;
   }
-
-  if (senha !== confirmar) {
-    toast('As senhas não coincidem!');
-    return;
-  }
-
+  if (senha !== confirmar) { toast('As senhas não coincidem!'); return; }
   if (parseInt(idade) < 16 || parseInt(idade) > 69) {
-    toast('Idade deve ser entre 16 e 69 anos!');
-    return;
+    toast('Idade deve ser entre 16 e 69 anos!'); return;
   }
 
-  const { data: existente } = await client
-    .from('usuarios')
-    .select('*')
-    .eq('email', email);
+  const { data: existente } = await client.from('usuarios').select('*').eq('email', email);
+  if (existente && existente.length > 0) { toast('E-mail já cadastrado!'); return; }
 
-  if (existente && existente.length > 0){
-    toast('E-mail já cadastrado!');
-    return;
-  }
+  const { error } = await client.from('usuarios').insert([{
+    nome, idade: parseInt(idade), tipo_sanguineo: tipo, telefone, email, senha
+  }]);
 
-  const { error } = await client
-    .from('usuarios')
-    .insert([
-      {
-        nome,
-        idade: parseInt(idade),
-        tipo_sanguineo: tipo,
-        telefone,
-        email,
-        senha
-      }
-    ]);
-
-  if (error) {
-    toast('Erro ao cadastrar!');
-    return;
-  }
+  if (error) { toast('Erro ao cadastrar!'); return; }
 
   toast('Cadastro realizado!');
-
-  setTimeout(() => {
-    ir('screen-login');
-  }, 1500);
-
-  document.getElementById('cad-nome').value = '';
-  document.getElementById('cad-idade').value = '';
-  document.getElementById('cad-tipo').value = '';
-  document.getElementById('cad-telefone').value = '';
-  document.getElementById('cad-email').value = '';
-  document.getElementById('cad-senha').value = '';
-  document.getElementById('cad-confirmar').value = '';
+  setTimeout(() => ir('screen-login'), 1500);
+  ['cad-nome','cad-idade','cad-tipo','cad-telefone','cad-email','cad-senha','cad-confirmar']
+    .forEach(id => document.getElementById(id).value = '');
 }
 
-/* AGENDAR */
+/* ──────────── CADASTRO HEMOCENTRO ──────────── */
+
+async function salvarCadastroHemo() {
+  const nome        = document.getElementById('hemo-nome').value.trim();
+  const cnpj        = document.getElementById('hemo-cnpj').value.trim();
+  const responsavel = document.getElementById('hemo-responsavel').value.trim();
+  const telefone    = document.getElementById('hemo-telefone').value.trim();
+  const endereco    = document.getElementById('hemo-endereco').value.trim();
+  const cidade      = document.getElementById('hemo-cidade').value.trim();
+  const estado      = document.getElementById('hemo-estado').value;
+  const email       = document.getElementById('hemo-email').value.trim();
+  const senha       = document.getElementById('hemo-senha').value;
+  const confirmar   = document.getElementById('hemo-confirmar').value;
+  const horario     = document.getElementById('hemo-horario').value.trim();
+
+  if (!nome || !cnpj || !responsavel || !telefone || !endereco || !cidade || !estado || !email || !senha || !horario) {
+    toast('Preencha todos os campos!'); return;
+  }
+  if (senha !== confirmar) { toast('As senhas não coincidem!'); return; }
+
+  const { data: existente } = await client.from('hemocentros').select('*').eq('email', email);
+  if (existente && existente.length > 0) { toast('E-mail já cadastrado!'); return; }
+
+  // Estoque inicial zerado para todos os tipos
+  const estoqueInicial = {};
+  TIPOS_SANGUINEOS.forEach(t => estoqueInicial[t] = 0);
+
+  const { error } = await client.from('hemocentros').insert([{
+    nome, cnpj, responsavel, telefone, endereco, cidade, estado,
+    email, senha, horario, estoque: estoqueInicial
+  }]);
+
+  if (error) { console.error(error); toast('Erro ao cadastrar hemocentro!'); return; }
+
+  toast('Hemocentro cadastrado com sucesso!');
+  setTimeout(() => ir('screen-login'), 1500);
+  ['hemo-nome','hemo-cnpj','hemo-responsavel','hemo-telefone','hemo-endereco',
+   'hemo-cidade','hemo-email','hemo-senha','hemo-confirmar','hemo-horario']
+    .forEach(id => document.getElementById(id).value = '');
+}
+
+/* ──────────── BUSCAR HEMOCENTRO ──────────── */
+
+let todosHemocentros = [];
+
+async function irBuscarHemocentro() {
+  document.getElementById('busca-cidade').value = '';
+  document.getElementById('lista-hemocentros').innerHTML =
+    '<div class="empty-state"><div class="empty-icon">🔍</div><p>Digite uma cidade para buscar hemocentros.</p></div>';
+
+  // Carrega todos os hemocentros
+  const { data, error } = await client.from('hemocentros').select('*');
+  if (error) { toast('Erro ao carregar hemocentros!'); return; }
+  todosHemocentros = data || [];
+
+  ir('screen-buscar-hemo');
+}
+
+function filtrarHemocentros() {
+  const termo = document.getElementById('busca-cidade').value.trim().toLowerCase();
+  const lista = document.getElementById('lista-hemocentros');
+
+  if (!termo) {
+    lista.innerHTML =
+      '<div class="empty-state"><div class="empty-icon">🔍</div><p>Digite uma cidade para buscar hemocentros.</p></div>';
+    return;
+  }
+
+  const filtrados = todosHemocentros.filter(h =>
+    (h.cidade && h.cidade.toLowerCase().includes(termo)) ||
+    (h.endereco && h.endereco.toLowerCase().includes(termo)) ||
+    (h.nome && h.nome.toLowerCase().includes(termo)) ||
+    (h.estado && h.estado.toLowerCase().includes(termo))
+  );
+
+  if (!filtrados.length) {
+    lista.innerHTML =
+      '<div class="empty-state"><div class="empty-icon">😔</div><p>Nenhum hemocentro encontrado para "<strong>' + termo + '</strong>".</p></div>';
+    return;
+  }
+
+  lista.innerHTML = filtrados.map(h => {
+    const estoque = h.estoque || {};
+    const alertas = TIPOS_SANGUINEOS.filter(t => (estoque[t] || 0) < LIMITE_CRITICO);
+    const alertaHTML = alertas.length
+      ? `<div class="hemo-alerta-mini">⚠️ Necessita: ${alertas.join(', ')}</div>`
+      : '';
+    return `
+      <div class="hemo-card-busca" onclick="selecionarHemocentro(${h.id})">
+        <div class="hemo-card-info">
+          <div class="hemo-card-nome">${h.nome}</div>
+          <div class="hemo-card-end">📍 ${h.endereco}, ${h.cidade} — ${h.estado}</div>
+          <div class="hemo-card-hor">🕐 ${h.horario}</div>
+          ${alertaHTML}
+        </div>
+        <div class="hemo-card-arrow">›</div>
+      </div>
+    `;
+  }).join('');
+}
+
+function selecionarHemocentro(id) {
+  hemocentroSelecionado = todosHemocentros.find(h => h.id === id);
+  if (!hemocentroSelecionado) return;
+  irAgendar();
+}
+
+/* ──────────── AGENDAR ──────────── */
 
 function irAgendar() {
-
-  const hoje = new Date()
-    .toISOString()
-    .split('T')[0];
-
+  const hoje = new Date().toISOString().split('T')[0];
   document.getElementById('ag-data').min = hoje;
+  document.getElementById('ag-data').value = '';
+  document.getElementById('ag-horario').value = '';
+
+  const h = hemocentroSelecionado;
+  document.getElementById('hemo-selecionado-info').innerHTML = `
+    <div class="hemo-sel-nome">🏥 ${h.nome}</div>
+    <div class="hemo-sel-end">📍 ${h.endereco}, ${h.cidade}</div>
+    <div class="hemo-sel-hor">🕐 ${h.horario}</div>
+  `;
 
   ir('screen-agendar');
 }
 
 async function confirmarAgendamento() {
+  const data    = document.getElementById('ag-data').value;
+  const horario = document.getElementById('ag-horario').value;
 
-  const data =
-    document.getElementById('ag-data').value;
+  if (!data || !horario) { toast('Selecione data e horário!'); return; }
+  if (!hemocentroSelecionado) { toast('Nenhum hemocentro selecionado!'); return; }
 
-  const horario =
-    document.getElementById('ag-horario').value;
+  const { error } = await client.from('agendamentos').insert([{
+    usuario_email: usuarioLogado.email,
+    data,
+    horario,
+    local: hemocentroSelecionado.nome,
+    hemocentro_id: hemocentroSelecionado.id
+  }]);
 
-  const local =
-    document.getElementById('ag-local').value;
-
-  if (!data || !horario) {
-    toast('Selecione data e horário!');
-    return;
-  }
-
-  const { error } = await client
-    .from('agendamentos')
-    .insert([
-      {
-        usuario_email: usuarioLogado.email,
-        data,
-        horario,
-        local
-      }
-    ]);
-
-  if (error) {
-    toast('Erro ao agendar!');
-    return;
-  }
+  if (error) { toast('Erro ao agendar!'); return; }
 
   toast('Agendamento confirmado!');
-
-  setTimeout(() => {
-    ir('screen-main');
-  }, 1500);
-
-  document.getElementById('ag-data').value = '';
-  document.getElementById('ag-horario').value = '';
-  document.getElementById('ag-local').value = '';
+  setTimeout(() => ir('screen-main'), 1500);
 }
 
-/* AGENDAMENTOS */
+/* ──────────── AGENDAMENTOS DOADOR ──────────── */
 
 async function irAgendamentos() {
-
   await renderAgendamentos();
-
   agendamentoSelecionado = null;
-
-  document.getElementById('btn-cancelar-ag')
-    .style.display = 'none';
-
+  document.getElementById('btn-cancelar-ag').style.display = 'none';
   ir('screen-agendamentos');
 }
 
 async function renderAgendamentos() {
-
-  const lista =
-    document.getElementById('historico-agendamentos');
-
+  const lista = document.getElementById('historico-agendamentos');
   const { data: ags, error } = await client
-    .from('agendamentos')
-    .select('*')
-    .eq('usuario_email', usuarioLogado.email);
+    .from('agendamentos').select('*').eq('usuario_email', usuarioLogado.email);
 
   if (error || !ags || ags.length === 0) {
-
-    lista.innerHTML = `
-      <div class="empty-state">
-        <div class="empty-icon">📅</div>
-        <p>Nenhum agendamento encontrado.</p>
-      </div>
-    `;
-
+    lista.innerHTML = `<div class="empty-state"><div class="empty-icon">📅</div><p>Nenhum agendamento encontrado.</p></div>`;
     return;
   }
 
   lista.innerHTML = ags.map(a => {
-
     const [ano, mes, dia] = a.data.split('-');
-
     return `
-      <div class="agendamento-item"
-           id="ag-item-${a.id}"
-           onclick="selecionarAg(${a.id})">
-
+      <div class="agendamento-item" id="ag-item-${a.id}" onclick="selecionarAg(${a.id})">
         <div>
-          <div class="ag-date">
-            ${dia}/${mes}/${ano}
-          </div>
-
-          <div class="ag-local">
-            ${a.local}
-          </div>
+          <div class="ag-date">${dia}/${mes}/${ano}</div>
+          <div class="ag-local">${a.local}</div>
         </div>
-
-        <div class="ag-hora">
-          ${a.horario}
-        </div>
-
+        <div class="ag-hora">${a.horario}</div>
       </div>
     `;
   }).join('');
 }
 
 function selecionarAg(id) {
-
-  document.querySelectorAll('.agendamento-item')
-    .forEach(el => el.classList.remove('selected'));
-
-  document.getElementById('ag-item-' + id)
-    .classList.add('selected');
-
+  document.querySelectorAll('.agendamento-item').forEach(el => el.classList.remove('selected'));
+  document.getElementById('ag-item-' + id).classList.add('selected');
   agendamentoSelecionado = id;
-
-  document.getElementById('btn-cancelar-ag')
-    .style.display = 'block';
+  document.getElementById('btn-cancelar-ag').style.display = 'block';
 }
 
-/* CANCELAR */
+/* ──────────── AGENDAMENTOS HEMOCENTRO ──────────── */
 
-function abrirModalCancelar() {
+async function irAgendamentosHemo() {
+  const lista = document.getElementById('lista-agendamentos-hemo');
+  lista.innerHTML = '<div class="empty-state"><div class="empty-icon">⏳</div><p>Carregando...</p></div>';
+  ir('screen-agendamentos-hemo');
 
-  if (!agendamentoSelecionado) {
-    toast('Selecione um agendamento!');
+  const { data: ags, error } = await client
+    .from('agendamentos')
+    .select('*')
+    .eq('hemocentro_id', hemocentroLogado.id)
+    .order('data', { ascending: true });
+
+  if (error || !ags || ags.length === 0) {
+    lista.innerHTML = '<div class="empty-state"><div class="empty-icon">📅</div><p>Nenhum agendamento encontrado.</p></div>';
     return;
   }
 
+  lista.innerHTML = ags.map(a => {
+    const [ano, mes, dia] = a.data.split('-');
+    return `
+      <div class="agendamento-item">
+        <div>
+          <div class="ag-date">${dia}/${mes}/${ano}</div>
+          <div class="ag-local">👤 ${a.usuario_email}</div>
+        </div>
+        <div class="ag-hora">${a.horario}</div>
+      </div>
+    `;
+  }).join('');
+}
+
+/* ──────────── CANCELAR AGENDAMENTO ──────────── */
+
+function abrirModalCancelar() {
+  if (!agendamentoSelecionado) { toast('Selecione um agendamento!'); return; }
   abrirModal('modal-cancelar');
 }
 
 async function cancelarAgendamento() {
-
-  await client
-    .from('agendamentos')
-    .delete()
-    .eq('id', agendamentoSelecionado);
-
+  await client.from('agendamentos').delete().eq('id', agendamentoSelecionado);
   fecharModal('modal-cancelar');
-
   toast('Agendamento cancelado!');
-
   renderAgendamentos();
 }
 
-/* PERFIL */
+/* ──────────── PERFIL DOADOR ──────────── */
 
 function irPerfil() {
-
   const u = usuarioLogado;
-
-  const iniciais = u.nome
-    .split(' ')
-    .map(n => n[0])
-    .slice(0, 2)
-    .join('')
-    .toUpperCase();
-
-  document.getElementById('perfil-avatar').textContent =
-    iniciais;
-
-  document.getElementById('perfil-nome').textContent =
-    u.nome;
-
-  document.getElementById('perfil-email').textContent =
-    u.email;
-
-  document.getElementById('perfil-tipo').textContent =
-    u.tipo_sanguineo;
-
-  document.getElementById('perfil-idade').textContent =
-    u.idade + ' anos';
-
-  document.getElementById('perfil-telefone').textContent =
-    u.telefone;
-
+  const iniciais = u.nome.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase();
+  document.getElementById('perfil-avatar').textContent = iniciais;
+  document.getElementById('perfil-nome').textContent = u.nome;
+  document.getElementById('perfil-email').textContent = u.email;
+  document.getElementById('perfil-tipo').textContent = u.tipo_sanguineo;
+  document.getElementById('perfil-idade').textContent = u.idade + ' anos';
+  document.getElementById('perfil-telefone').textContent = u.telefone;
   ir('screen-perfil');
 }
 
-/* MODAIS */
+/* ──────────── PERFIL HEMOCENTRO ──────────── */
 
-function abrirModal(id) {
-  document.getElementById(id)
-    .classList.add('open');
+async function irPerfilHemo() {
+  // Recarrega dados frescos do banco para garantir estoque atualizado
+  const { data: hemo } = await client
+    .from('hemocentros').select('*').eq('id', hemocentroLogado.id).maybeSingle();
+  if (hemo) hemocentroLogado = hemo;
+
+  const h = hemocentroLogado;
+  const iniciais = h.nome.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase();
+
+  document.getElementById('hemo-avatar-initials').textContent = iniciais;
+  document.getElementById('hemo-perfil-nome').textContent = h.nome;
+  document.getElementById('hemo-perfil-endereco').textContent = h.endereco;
+  document.getElementById('hemo-perfil-cidade').textContent = h.cidade + ' — ' + h.estado;
+  document.getElementById('hemo-perfil-resp').textContent = h.responsavel;
+  document.getElementById('hemo-perfil-tel').textContent = h.telefone;
+  document.getElementById('hemo-perfil-horario').textContent = h.horario;
+  document.getElementById('hemo-perfil-email').textContent = h.email;
+
+  renderEstoque(h.estoque || {});
+  ir('screen-perfil-hemo');
 }
 
-function fecharModal(id) {
-  document.getElementById(id)
-    .classList.remove('open');
+function renderEstoque(estoque) {
+  const grid = document.getElementById('estoque-grid');
+  const alertasDiv = document.getElementById('alertas-escassez');
+
+  const alertas = TIPOS_SANGUINEOS.filter(t => (estoque[t] || 0) < LIMITE_CRITICO);
+
+  // Alertas de escassez
+  if (alertas.length > 0) {
+    alertasDiv.style.display = 'block';
+    alertasDiv.innerHTML = `
+      <div class="alerta-escassez">
+        <span class="alerta-icon">⚠️</span>
+        <div>
+          <strong>Atenção: estoque crítico!</strong>
+          <p>Tipos em falta ou baixo estoque: <strong>${alertas.join(', ')}</strong></p>
+        </div>
+      </div>
+    `;
+  } else {
+    alertasDiv.style.display = 'none';
+  }
+
+  // Grid de tipos sanguíneos
+  grid.innerHTML = TIPOS_SANGUINEOS.map(tipo => {
+    const qtd = estoque[tipo] || 0;
+    const critico = qtd < LIMITE_CRITICO;
+    return `
+      <div class="estoque-item ${critico ? 'critico' : ''}">
+        <div class="estoque-tipo">${tipo}</div>
+        ${critico ? '<div class="estoque-badge-alerta">⚠️ Baixo</div>' : '<div class="estoque-badge-ok">✓ Ok</div>'}
+        <div class="estoque-controles">
+          <button class="est-btn" onclick="ajustarEstoque('${tipo}', -1)">−</button>
+          <input type="number" id="est-${tipo.replace('+','p').replace('-','m')}"
+            value="${qtd}" min="0" max="9999"
+            class="est-input ${critico ? 'est-input-critico' : ''}">
+          <button class="est-btn" onclick="ajustarEstoque('${tipo}', 1)">+</button>
+        </div>
+      </div>
+    `;
+  }).join('');
 }
 
-document.querySelectorAll('.modal-overlay')
-  .forEach(m => {
+function ajustarEstoque(tipo, delta) {
+  const safeId = tipo.replace('+', 'p').replace('-', 'm');
+  const input = document.getElementById('est-' + safeId);
+  if (!input) return;
+  const novoVal = Math.max(0, parseInt(input.value || 0) + delta);
+  input.value = novoVal;
+  // Atualiza visual de crítico em tempo real
+  const item = input.closest('.estoque-item');
+  const badge = item.querySelector('.estoque-badge-alerta, .estoque-badge-ok');
+  const inputEl = item.querySelector('.est-input');
+  if (novoVal < LIMITE_CRITICO) {
+    item.classList.add('critico');
+    badge.className = 'estoque-badge-alerta';
+    badge.textContent = '⚠️ Baixo';
+    inputEl.classList.add('est-input-critico');
+  } else {
+    item.classList.remove('critico');
+    badge.className = 'estoque-badge-ok';
+    badge.textContent = '✓ Ok';
+    inputEl.classList.remove('est-input-critico');
+  }
+  // Atualiza alertas em tempo real
+  atualizarAlertasTempoReal();
+}
 
-    m.addEventListener('click', e => {
+function atualizarAlertasTempoReal() {
+  const alertasDiv = document.getElementById('alertas-escassez');
+  const criticos = TIPOS_SANGUINEOS.filter(t => {
+    const safeId = t.replace('+', 'p').replace('-', 'm');
+    const input = document.getElementById('est-' + safeId);
+    return input && parseInt(input.value || 0) < LIMITE_CRITICO;
+  });
+  if (criticos.length > 0) {
+    alertasDiv.style.display = 'block';
+    alertasDiv.innerHTML = `
+      <div class="alerta-escassez">
+        <span class="alerta-icon">⚠️</span>
+        <div>
+          <strong>Atenção: estoque crítico!</strong>
+          <p>Tipos em falta ou baixo estoque: <strong>${criticos.join(', ')}</strong></p>
+        </div>
+      </div>
+    `;
+  } else {
+    alertasDiv.style.display = 'none';
+  }
+}
 
-      if (e.target === m) {
-        m.classList.remove('open');
-      }
-
-    });
-
+async function salvarEstoque() {
+  const novoEstoque = {};
+  TIPOS_SANGUINEOS.forEach(t => {
+    const safeId = t.replace('+', 'p').replace('-', 'm');
+    const input = document.getElementById('est-' + safeId);
+    novoEstoque[t] = input ? parseInt(input.value || 0) : 0;
   });
 
+  const { error } = await client
+    .from('hemocentros')
+    .update({ estoque: novoEstoque })
+    .eq('id', hemocentroLogado.id);
+
+  if (error) { toast('Erro ao salvar estoque!'); return; }
+
+  hemocentroLogado.estoque = novoEstoque;
+  toast('Estoque atualizado com sucesso!');
+  renderEstoque(novoEstoque);
+}
+
+/* ──────────── EDITAR HEMOCENTRO ──────────── */
+
+function irEditarHemo() {
+  const h = hemocentroLogado;
+  document.getElementById('edit-hemo-nome').value = h.nome;
+  document.getElementById('edit-hemo-responsavel').value = h.responsavel;
+  document.getElementById('edit-hemo-telefone').value = h.telefone;
+  document.getElementById('edit-hemo-endereco').value = h.endereco;
+  document.getElementById('edit-hemo-cidade').value = h.cidade;
+  document.getElementById('edit-hemo-estado').value = h.estado;
+  document.getElementById('edit-hemo-horario').value = h.horario;
+  ir('screen-editar-hemo');
+}
+
+async function salvarEdicaoHemo() {
+  const nome        = document.getElementById('edit-hemo-nome').value.trim();
+  const responsavel = document.getElementById('edit-hemo-responsavel').value.trim();
+  const telefone    = document.getElementById('edit-hemo-telefone').value.trim();
+  const endereco    = document.getElementById('edit-hemo-endereco').value.trim();
+  const cidade      = document.getElementById('edit-hemo-cidade').value.trim();
+  const estado      = document.getElementById('edit-hemo-estado').value;
+  const horario     = document.getElementById('edit-hemo-horario').value.trim();
+
+  if (!nome || !responsavel || !telefone || !endereco || !cidade || !estado || !horario) {
+    toast('Preencha todos os campos!'); return;
+  }
+
+  const { error } = await client
+    .from('hemocentros')
+    .update({ nome, responsavel, telefone, endereco, cidade, estado, horario })
+    .eq('id', hemocentroLogado.id);
+
+  if (error) { toast('Erro ao salvar!'); return; }
+
+  Object.assign(hemocentroLogado, { nome, responsavel, telefone, endereco, cidade, estado, horario });
+  toast('Dados atualizados!');
+  abrirMainHemo();
+}
+
+/* ──────────── EDITAR PERFIL DOADOR ──────────── */
+
 function irEditarPerfil() {
-
-  document.getElementById('edit-nome').value =
-    usuarioLogado.nome;
-
-  document.getElementById('edit-idade').value =
-    usuarioLogado.idade;
-
-  document.getElementById('edit-tipo').value =
-    usuarioLogado.tipo_sanguineo;
-
-  document.getElementById('edit-telefone').value =
-    usuarioLogado.telefone;
-
+  document.getElementById('edit-nome').value = usuarioLogado.nome;
+  document.getElementById('edit-idade').value = usuarioLogado.idade;
+  document.getElementById('edit-tipo').value = usuarioLogado.tipo_sanguineo;
+  document.getElementById('edit-telefone').value = usuarioLogado.telefone;
   ir('screen-editar-perfil');
 }
 
 async function salvarEdicao() {
-
-  const nome =
-    document.getElementById('edit-nome').value;
-
-  const idade =
-    document.getElementById('edit-idade').value;
-
-  const tipo =
-    document.getElementById('edit-tipo').value;
-
-  const telefone =
-    document.getElementById('edit-telefone').value;
+  const nome     = document.getElementById('edit-nome').value;
+  const idade    = document.getElementById('edit-idade').value;
+  const tipo     = document.getElementById('edit-tipo').value;
+  const telefone = document.getElementById('edit-telefone').value;
 
   const { error } = await client
     .from('usuarios')
-    .update({
-      nome,
-      idade,
-      tipo_sanguineo: tipo,
-      telefone
-    })
+    .update({ nome, idade, tipo_sanguineo: tipo, telefone })
     .eq('email', usuarioLogado.email);
 
-  if (error) {
-    toast('Erro ao salvar!');
-    return;
-  }
+  if (error) { toast('Erro ao salvar!'); return; }
 
-  usuarioLogado.nome = nome;
-  usuarioLogado.idade = idade;
-  usuarioLogado.tipo_sanguineo = tipo;
-  usuarioLogado.telefone = telefone;
-
+  Object.assign(usuarioLogado, { nome, idade, tipo_sanguineo: tipo, telefone });
   toast('Perfil atualizado!');
-
   irPerfil();
 }
 
-function abrirModalExcluir() {
-  abrirModal('modal-excluir');
-}
+/* ──────────── EXCLUIR CONTA ──────────── */
+
+function abrirModalExcluir() { abrirModal('modal-excluir'); }
 
 async function excluirConta() {
-
-  await client
-    .from('agendamentos')
-    .delete()
-    .eq('usuario_email', usuarioLogado.email);
-
-  await client
-    .from('usuarios')
-    .delete()
-    .eq('email', usuarioLogado.email);
-
+  await client.from('agendamentos').delete().eq('usuario_email', usuarioLogado.email);
+  await client.from('usuarios').delete().eq('email', usuarioLogado.email);
   fecharModal('modal-excluir');
-
   toast('Conta excluída!');
-
-  setTimeout(() => {
-    fazerLogout();
-  }, 1500);
+  setTimeout(() => fazerLogout(), 1500);
 }
+
+/* ──────────── MODAIS ──────────── */
+
+function abrirModal(id) { document.getElementById(id).classList.add('open'); }
+function fecharModal(id) { document.getElementById(id).classList.remove('open'); }
+
+document.querySelectorAll('.modal-overlay').forEach(m => {
+  m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); });
+});
