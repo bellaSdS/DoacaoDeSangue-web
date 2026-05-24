@@ -49,7 +49,7 @@ async function fazerLogin() {
     return;
   }
 
-  const { data: user, error } = await supabase
+  const { data: user, error } = await client
     .from('usuarios')
     .select('*')
     .eq('email', email)
@@ -127,7 +127,7 @@ async function salvarCadastro() {
     return;
   }
 
-  const { data: existente } = await supabase
+  const { data: existente } = await client
     .from('usuarios')
     .select('*')
     .eq('email', email);
@@ -137,7 +137,7 @@ async function salvarCadastro() {
     return;
   }
 
-  const { error } = await supabase
+  const { error } = await client
     .from('usuarios')
     .insert([
       {
@@ -199,7 +199,7 @@ async function confirmarAgendamento() {
     return;
   }
 
-  const { error } = await supabase
+  const { error } = await client
     .from('agendamentos')
     .insert([
       {
@@ -241,7 +241,7 @@ async function renderAgendamentos() {
   const lista =
     document.getElementById('historico-agendamentos');
 
-  const { data: ags, error } = await supabase
+  const { data: ags, error } = await client
     .from('agendamentos')
     .select('*')
     .eq('usuario_email', usuarioLogado.email);
@@ -314,7 +314,7 @@ function abrirModalCancelar() {
 
 async function cancelarAgendamento() {
 
-  await supabase
+  await client
     .from('agendamentos')
     .delete()
     .eq('id', agendamentoSelecionado);
@@ -416,7 +416,7 @@ async function salvarEdicao() {
   const telefone =
     document.getElementById('edit-telefone').value;
 
-  const { error } = await supabase
+  const { error } = await client
     .from('usuarios')
     .update({
       nome,
@@ -447,12 +447,12 @@ function abrirModalExcluir() {
 
 async function excluirConta() {
 
-  await supabase
+  await client
     .from('agendamentos')
     .delete()
     .eq('usuario_email', usuarioLogado.email);
 
-  await supabase
+  await client
     .from('usuarios')
     .delete()
     .eq('email', usuarioLogado.email);
