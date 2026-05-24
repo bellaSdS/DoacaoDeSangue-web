@@ -244,95 +244,127 @@
 
   <div class="menu-header hemo-header">
     <p>Bem-vindo</p>
-    <h2>Hemocentro São Lucas</h2>
+
+    <h2 id="main-hemo-nome">
+      Hemocentro
+    </h2>
+
+    <p id="main-hemo-cidade">
+      —
+    </p>
   </div>
 
   <div class="menu-grid">
 
-    <!-- PERFIL -->
-    <div class="menu-item" onclick="ir('screen-perfil-hemo')">
+    <div class="menu-item" onclick="irPerfilHemo()">
       <div class="icon">🏥</div>
       <span>Perfil</span>
     </div>
 
-    <!-- CONTROLE DE ESTOQUE -->
     <div class="menu-item" onclick="ir('screen-estoque')">
       <div class="icon">🩸</div>
       <span>Controle de Estoque</span>
     </div>
 
-    <!-- AGENDAMENTOS -->
-    <div class="menu-item" onclick="ir('screen-agendamentos-hemo')">
+    <div class="menu-item" onclick="irAgendamentosHemo()">
       <div class="icon">📅</div>
       <span>Agendamentos</span>
+    </div>
+
+    <div class="menu-item" onclick="fazerLogout()">
+      <div class="icon">🚪</div>
+      <span>Sair</span>
     </div>
 
   </div>
 
 </div>
 
-
-
-<!-- ===================================================== -->
 <!-- PERFIL DO HEMOCENTRO -->
-<!-- ===================================================== -->
-
 <div id="screen-perfil-hemo" class="screen">
-
-  <div class="top-nav">
-    <button class="back-btn" onclick="ir('screen-main-hemo')">
-      ←
-    </button>
-
-    <h1 class="screen-title">
-      Perfil
-    </h1>
-  </div>
 
   <div class="card">
 
-    <div class="perfil-avatar hemo-avatar">
+    <div class="top-nav">
+      <button class="back-btn" onclick="ir('screen-main-hemo')">
+        ←
+      </button>
+
+      <h1 class="screen-title">
+        Perfil
+      </h1>
+    </div>
+
+    <div class="perfil-avatar hemo-avatar"
+         id="hemo-avatar-initials">
       H
     </div>
 
     <div class="perfil-info">
-      <h2>Hemocentro São Lucas</h2>
+
+      <h2 id="hemo-perfil-nome">
+        Hemocentro
+      </h2>
 
       <p>
         Centro de doação de sangue
       </p>
+
     </div>
 
     <div class="info-grid">
 
       <div class="info-card">
         <div class="label">Telefone</div>
-        <div class="value">(11) 4000-0000</div>
+        <div class="value" id="hemo-perfil-tel">
+          —
+        </div>
       </div>
 
       <div class="info-card">
         <div class="label">Cidade</div>
-        <div class="value">São Paulo</div>
+        <div class="value" id="hemo-perfil-cidade">
+          —
+        </div>
       </div>
 
       <div class="info-card">
         <div class="label">Funcionamento</div>
-        <div class="value">08h às 18h</div>
+        <div class="value" id="hemo-perfil-horario">
+          —
+        </div>
       </div>
 
       <div class="info-card">
         <div class="label">Email</div>
-        <div class="value">contato@hemo.com</div>
+        <div class="value" id="hemo-perfil-email">
+          —
+        </div>
+      </div>
+
+      <div class="info-card">
+        <div class="label">Endereço</div>
+        <div class="value" id="hemo-perfil-endereco">
+          —
+        </div>
+      </div>
+
+      <div class="info-card">
+        <div class="label">Responsável</div>
+        <div class="value" id="hemo-perfil-resp">
+          —
+        </div>
       </div>
 
     </div>
 
-    <button class="btn btn-primary">
+    <button class="btn btn-primary"
+            onclick="irEditarHemo()">
       Editar Perfil
     </button>
 
     <button class="btn btn-danger"
-            onclick="abrirModalRemover()">
+            onclick="excluirHemocentro()">
       Remover Hemocentro
     </button>
 
@@ -340,18 +372,13 @@
 
 </div>
 
-
-
-<!-- ===================================================== -->
 <!-- CONTROLE DE ESTOQUE -->
-<!-- ===================================================== -->
-
 <div id="screen-estoque" class="screen">
 
   <div class="top-nav">
 
     <button class="back-btn"
-            onclick="abrirTela('menu-hemo')">
+            onclick="ir('screen-main-hemo')">
       ←
     </button>
 
@@ -364,29 +391,7 @@
   <div class="card">
 
     <!-- ALERTAS -->
-    <div class="alertas-container">
-
-      <div class="alerta-escassez">
-
-        <div class="alerta-icon">
-          ⚠️
-        </div>
-
-        <div>
-
-          <strong>
-            Estoque crítico
-          </strong>
-
-          <p>
-            Os tipos O- e AB- estão abaixo do nível recomendado.
-          </p>
-
-        </div>
-
-      </div>
-
-    </div>
+    <div class="alertas-container" id="alertas-estoque"></div>
 
     <hr class="divider">
 
@@ -528,12 +533,7 @@
 
 </div>
 
-
-
-<!-- ===================================================== -->
 <!-- MODAL REMOVER HEMOCENTRO -->
-<!-- ===================================================== -->
-
 <div class="modal-overlay"
      id="modal-remover">
 

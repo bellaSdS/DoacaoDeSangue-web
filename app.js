@@ -490,6 +490,71 @@ async function excluirHemocentro() {
   }, 1500);
 }
 
+/* ──────────── ESTOQUE HEMOCENTRO ──────────── */
+function renderAlertasEstoque() {
+
+  const container = document.getElementById('alertas-estoque');
+
+  if (!hemocentroLogado || !hemocentroLogado.estoque) {
+    container.innerHTML = '';
+    return;
+  }
+
+  const estoque = hemocentroLogado.estoque;
+
+  const criticos = TIPOS_SANGUINEOS.filter(tipo =>
+    (estoque[tipo] || 0) < LIMITE_CRITICO
+  );
+
+  if (criticos.length === 0) {
+
+    container.innerHTML = `
+      <div class="alerta-escassez"
+           style="background: var(--green-light); border-color: var(--green);">
+
+        <div class="alerta-icon">
+          ✅
+        </div>
+
+        <div>
+          <strong style="color: var(--green);">
+            Estoque estável
+          </strong>
+
+          <p>
+            Todos os tipos sanguíneos estão em nível adequado.
+          </p>
+        </div>
+
+      </div>
+    `;
+
+    return;
+  }
+
+  container.innerHTML = `
+    <div class="alerta-escassez">
+
+      <div class="alerta-icon">
+        ⚠️
+      </div>
+
+      <div>
+
+        <strong>
+          Estoque crítico
+        </strong>
+
+        <p>
+          Os tipos ${criticos.join(', ')} estão abaixo do nível recomendado.
+        </p>
+
+      </div>
+
+    </div>
+  `;
+}
+
 /* ──────────── EDITAR PERFIL DOADOR ──────────── */
 
 function irEditarPerfil() {
