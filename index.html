@@ -234,45 +234,6 @@
   </div>
 </div>
 
-<!-- PERFIL HEMOCENTRO -->
-<div class="screen" id="screen-perfil-hemo">
-  <div class="card">
-    <div class="top-nav">
-      <button class="back-btn" onclick="ir('screen-main-hemo')">←</button>
-      <span class="screen-title">Perfil & Estoque</span>
-    </div>
-
-    <!-- Dados do hemocentro -->
-    <div class="perfil-info">
-      <div class="perfil-avatar hemo-avatar" id="hemo-avatar-initials">H</div>
-      <h2 id="hemo-perfil-nome">—</h2>
-      <p id="hemo-perfil-endereco">—</p>
-      <span class="blood-badge" id="hemo-perfil-cidade">—</span>
-    </div>
-    <div class="info-grid" style="margin-bottom:1.5rem;">
-      <div class="info-card"><div class="label">Responsável</div><div class="value" id="hemo-perfil-resp">—</div></div>
-      <div class="info-card"><div class="label">Telefone</div><div class="value" id="hemo-perfil-tel">—</div></div>
-      <div class="info-card"><div class="label">Horário</div><div class="value" id="hemo-perfil-horario">—</div></div>
-      <div class="info-card"><div class="label">E-mail</div><div class="value" id="hemo-perfil-email" style="font-size:0.8rem;">—</div></div>
-    </div>
-
-    <!-- Controle de Estoque -->
-    <div class="estoque-section">
-      <div class="estoque-header">
-        <span class="section-label" style="margin:0;">🩸 Controle de Estoque</span>
-        <button class="btn-salvar-estoque" onclick="salvarEstoque()">Salvar</button>
-      </div>
-
-      <!-- Alertas de escassez -->
-      <div id="alertas-escassez" class="alertas-container" style="display:none;"></div>
-
-      <div class="estoque-grid" id="estoque-grid">
-        <!-- Preenchido via JS -->
-      </div>
-    </div>
-  </div>
-</div>
-
 <!-- EDITAR PERFIL DOADOR -->
 <div class="screen" id="screen-editar-perfil">
   <div class="card">
@@ -293,35 +254,330 @@
   </div>
 </div>
 
-<!-- EDITAR HEMOCENTRO -->
-<div class="screen" id="screen-editar-hemo">
-  <div class="card">
-    <div class="top-nav">
-      <button class="back-btn" onclick="ir('screen-main-hemo')">←</button>
-      <span class="screen-title">Editar Hemocentro</span>
-    </div>
-    <div class="form-group"><label>Nome do hemocentro</label><input type="text" id="edit-hemo-nome"></div>
-    <div class="form-group"><label>Responsável técnico</label><input type="text" id="edit-hemo-responsavel"></div>
-    <div class="form-group"><label>Telefone</label><input type="tel" id="edit-hemo-telefone"></div>
-    <div class="form-group"><label>Endereço completo</label><input type="text" id="edit-hemo-endereco"></div>
-    <div class="input-row">
-      <div class="form-group"><label>Cidade</label><input type="text" id="edit-hemo-cidade"></div>
-      <div class="form-group"><label>Estado</label>
-        <select id="edit-hemo-estado">
-          <option>AC</option><option>AL</option><option>AP</option><option>AM</option>
-          <option>BA</option><option>CE</option><option>DF</option><option>ES</option>
-          <option>GO</option><option>MA</option><option>MT</option><option>MS</option>
-          <option>MG</option><option>PA</option><option>PB</option><option>PR</option>
-          <option>PE</option><option>PI</option><option>RJ</option><option>RN</option>
-          <option>RS</option><option>RO</option><option>RR</option><option>SC</option>
-          <option>SP</option><option>SE</option><option>TO</option>
-        </select>
-      </div>
-    </div>
-    <div class="form-group"><label>Horário de atendimento</label><input type="text" id="edit-hemo-horario"></div>
-    <button class="btn btn-primary" onclick="salvarEdicaoHemo()">Salvar alterações</button>
-    <button class="btn btn-secondary" onclick="ir('screen-main-hemo')">Cancelar</button>
+<!-- MENU DO HEMOCENTRO -->
+<div id="screen-menu-hemo" class="screen active">
+
+  <div class="menu-header hemo-header">
+    <p>Bem-vindo</p>
+    <h2>Hemocentro São Lucas</h2>
   </div>
+
+  <div class="menu-grid">
+
+    <!-- PERFIL -->
+    <div class="menu-item" onclick="abrirTela('perfil-hemo')">
+      <div class="icon">🏥</div>
+      <span>Perfil</span>
+    </div>
+
+    <!-- CONTROLE DE ESTOQUE -->
+    <div class="menu-item" onclick="abrirTela('estoque')">
+      <div class="icon">🩸</div>
+      <span>Controle de Estoque</span>
+    </div>
+
+    <!-- AGENDAMENTOS -->
+    <div class="menu-item" onclick="abrirTela('agendamentos-hemo')">
+      <div class="icon">📅</div>
+      <span>Agendamentos</span>
+    </div>
+
+  </div>
+
+</div>
+
+
+
+<!-- ===================================================== -->
+<!-- PERFIL DO HEMOCENTRO -->
+<!-- ===================================================== -->
+
+<div id="screen-perfil-hemo" class="screen">
+
+  <div class="top-nav">
+    <button class="back-btn" onclick="abrirTela('menu-hemo')">
+      ←
+    </button>
+
+    <h1 class="screen-title">
+      Perfil
+    </h1>
+  </div>
+
+  <div class="card">
+
+    <div class="perfil-avatar hemo-avatar">
+      H
+    </div>
+
+    <div class="perfil-info">
+      <h2>Hemocentro São Lucas</h2>
+
+      <p>
+        Centro de doação de sangue
+      </p>
+    </div>
+
+    <div class="info-grid">
+
+      <div class="info-card">
+        <div class="label">Telefone</div>
+        <div class="value">(11) 4000-0000</div>
+      </div>
+
+      <div class="info-card">
+        <div class="label">Cidade</div>
+        <div class="value">São Paulo</div>
+      </div>
+
+      <div class="info-card">
+        <div class="label">Funcionamento</div>
+        <div class="value">08h às 18h</div>
+      </div>
+
+      <div class="info-card">
+        <div class="label">Email</div>
+        <div class="value">contato@hemo.com</div>
+      </div>
+
+    </div>
+
+    <button class="btn btn-primary">
+      Editar Perfil
+    </button>
+
+    <button class="btn btn-danger"
+            onclick="abrirModalRemover()">
+      Remover Hemocentro
+    </button>
+
+  </div>
+
+</div>
+
+
+
+<!-- ===================================================== -->
+<!-- CONTROLE DE ESTOQUE -->
+<!-- ===================================================== -->
+
+<div id="screen-estoque" class="screen">
+
+  <div class="top-nav">
+
+    <button class="back-btn"
+            onclick="abrirTela('menu-hemo')">
+      ←
+    </button>
+
+    <h1 class="screen-title">
+      Controle de Estoque
+    </h1>
+
+  </div>
+
+  <div class="card">
+
+    <!-- ALERTAS -->
+    <div class="alertas-container">
+
+      <div class="alerta-escassez">
+
+        <div class="alerta-icon">
+          ⚠️
+        </div>
+
+        <div>
+
+          <strong>
+            Estoque crítico
+          </strong>
+
+          <p>
+            Os tipos O- e AB- estão abaixo do nível recomendado.
+          </p>
+
+        </div>
+
+      </div>
+
+    </div>
+
+    <hr class="divider">
+
+    <!-- CABEÇALHO -->
+    <div class="estoque-header">
+
+      <div class="section-label">
+        Estoque de bolsas
+      </div>
+
+      <button class="btn-salvar-estoque">
+        Salvar
+      </button>
+
+    </div>
+
+    <!-- GRID DE ESTOQUE -->
+    <div class="estoque-grid">
+
+      <!-- A+ -->
+      <div class="estoque-item">
+
+        <div class="estoque-tipo">
+          A+
+        </div>
+
+        <div class="estoque-badge-ok">
+          Normal
+        </div>
+
+        <div class="estoque-controles">
+
+          <button class="est-btn">
+            −
+          </button>
+
+          <input type="number"
+                 class="est-input"
+                 value="12">
+
+          <button class="est-btn">
+            +
+          </button>
+
+        </div>
+
+      </div>
+
+      <!-- O- -->
+      <div class="estoque-item critico">
+
+        <div class="estoque-tipo">
+          O-
+        </div>
+
+        <div class="estoque-badge-alerta">
+          Crítico
+        </div>
+
+        <div class="estoque-controles">
+
+          <button class="est-btn">
+            −
+          </button>
+
+          <input type="number"
+                 class="est-input est-input-critico"
+                 value="2">
+
+          <button class="est-btn">
+            +
+          </button>
+
+        </div>
+
+      </div>
+
+      <!-- AB- -->
+      <div class="estoque-item critico">
+
+        <div class="estoque-tipo">
+          AB-
+        </div>
+
+        <div class="estoque-badge-alerta">
+          Crítico
+        </div>
+
+        <div class="estoque-controles">
+
+          <button class="est-btn">
+            −
+          </button>
+
+          <input type="number"
+                 class="est-input est-input-critico"
+                 value="1">
+
+          <button class="est-btn">
+            +
+          </button>
+
+        </div>
+
+      </div>
+
+      <!-- B+ -->
+      <div class="estoque-item">
+
+        <div class="estoque-tipo">
+          B+
+        </div>
+
+        <div class="estoque-badge-ok">
+          Normal
+        </div>
+
+        <div class="estoque-controles">
+
+          <button class="est-btn">
+            −
+          </button>
+
+          <input type="number"
+                 class="est-input"
+                 value="9">
+
+          <button class="est-btn">
+            +
+          </button>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
+
+
+
+<!-- ===================================================== -->
+<!-- MODAL REMOVER HEMOCENTRO -->
+<!-- ===================================================== -->
+
+<div class="modal-overlay"
+     id="modal-remover">
+
+  <div class="modal">
+
+    <h3>
+      Remover hemocentro?
+    </h3>
+
+    <p>
+      Essa ação removerá permanentemente
+      o hemocentro do sistema.
+    </p>
+
+    <div class="modal-btns">
+
+      <button class="btn btn-secondary"
+              onclick="fecharModalRemover()">
+        Cancelar
+      </button>
+
+      <button class="btn btn-danger">
+        Remover
+      </button>
+
+    </div>
+
+  </div>
+
 </div>
 
 <!-- MODAIS -->
