@@ -54,7 +54,7 @@ async function fazerLogin() {
     .select('*')
     .eq('email', email)
     .eq('senha', senha)
-    .single();
+    .maybeSingle();
 
   if (error || !user) {
     toast('E-mail ou senha incorretos!');
