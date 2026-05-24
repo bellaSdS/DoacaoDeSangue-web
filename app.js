@@ -454,6 +454,49 @@ function irEditarHemo() {
   ir('screen-editar-hemo');
 }
 
+/* ──────────── SALVAR EDIÇÃO HEMOCENTRO ──────────── */
+async function salvarEdicaoHemo() {
+
+  const nome = document.getElementById('edit-hemo-nome').value;
+  const responsavel = document.getElementById('edit-hemo-responsavel').value;
+  const telefone = document.getElementById('edit-hemo-telefone').value;
+  const endereco = document.getElementById('edit-hemo-endereco').value;
+  const cidade = document.getElementById('edit-hemo-cidade').value;
+  const estado = document.getElementById('edit-hemo-estado').value;
+  const horario = document.getElementById('edit-hemo-horario').value;
+
+  const { error } = await client
+    .from('hemocentros')
+    .update({
+      nome,
+      responsavel,
+      telefone,
+      endereco,
+      cidade,
+      estado,
+      horario
+    })
+    .eq('id', hemocentroLogado.id);
+
+  if (error) {
+    toast('Erro ao atualizar hemocentro!');
+    return;
+  }
+
+  Object.assign(hemocentroLogado, {
+    nome,
+    responsavel,
+    telefone,
+    endereco,
+    cidade,
+    estado,
+    horario
+  });
+
+  toast('Perfil atualizado!');
+  irPerfilHemo();
+}
+
 /* ──────────── EXCLUIR HEMOCENTRO ──────────── */
 
 async function excluirHemocentro() {
