@@ -156,6 +156,14 @@ async function salvarCadastro() {
   setTimeout(() => {
     ir('screen-login');
   }, 1500);
+
+  document.getElementById('cad-nome').value = '';
+document.getElementById('cad-idade').value = '';
+document.getElementById('cad-tipo').value = '';
+document.getElementById('cad-telefone').value = '';
+document.getElementById('cad-email').value = '';
+document.getElementById('cad-senha').value = '';
+document.getElementById('cad-confirmar').value = '';
 }
 
 /* AGENDAR */
