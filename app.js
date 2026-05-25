@@ -404,6 +404,21 @@ async function confirmarAgendamento() {
 }
 
 /* ──────────── AGENDAMENTOS DOADOR ──────────── */
+async function irAgendamentos() {
+
+  agendamentoSelecionado = null;
+
+  const btn =
+    document.getElementById('btn-cancelar-ag');
+
+  if (btn) {
+    btn.style.display = 'none';
+  }
+
+  await renderAgendamentos();
+
+  ir('screen-agendamentos');
+}
 
 async function renderAgendamentos() {
 
