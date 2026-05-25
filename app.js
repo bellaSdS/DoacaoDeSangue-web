@@ -129,6 +129,30 @@ function inicializarLeituraAcessivel() {
   });
 }
 
+/* ──────────── NAVEGAÇÃO ──────────── */
+
+function ir(id) {
+  const novaTela = document.getElementById(id);
+  
+  // Segurança: Se a tela não existir no HTML, avisa no console e não trava o sistema
+  if (!novaTela) {
+    console.error(`A tela com o ID "${id}" não foi encontrada no HTML.`);
+    return;
+  }
+
+  // Remove o active de todas as telas
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  
+  // Ativa a nova tela
+  novaTela.classList.add('active');
+
+  // Descobre o título da nova tela para narrar ao usuário (Acessibilidade)
+  const tituloTela = novaTela.querySelector('h2, .screen-title, h3')?.textContent || "Nova tela carregada";
+  
+  // Anuncia a mudança de tela
+  anunciar(`Entrou na tela: ${tituloTela}`);
+}
+
 /* ──────────── TOAST ──────────── */
 
 function toast(msg, dur = 3000) {
