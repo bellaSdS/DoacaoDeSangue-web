@@ -76,15 +76,22 @@ carregarVoz();
 
 function toggleAudio() {
   audioAtivo = !audioAtivo;
+
   const btn = document.getElementById('btn-audio');
   btn.setAttribute('aria-pressed', audioAtivo);
   btn.classList.toggle('acess-btn-ativo', audioAtivo);
+
   localStorage.setItem('audio', audioAtivo ? '1' : '0');
-  falar(audioAtivo ? 'Narração por voz ativada' : 'Narração por voz desativada');
+
+  falar(
+    audioAtivo ? 'Narração por voz ativada' : 'Narração por voz desativada',
+    true
+  );
 }
 
-function falar(texto) {
-  if (!audioAtivo || !synth) return;
+function falar(texto, forcar = false) {
+  if ((!audioAtivo && !forcar) || !synth) return;
+
   synth.cancel();
   const utter = new SpeechSynthesisUtterance(texto);
   utter.lang = 'pt-BR';
