@@ -91,7 +91,7 @@ function anunciar(texto) {
   falar(texto, true);
 }
 
-/* ──────────── LEITURA AUTOMÁTICA DE ELEMENTOS (CORRIGIDA) ──────────── */
+/* ──────────── LEITURA AUTOMÁTICA DE ELEMENTOS ──────────── */
 
 function inicializarLeituraAcessivel() {
   
