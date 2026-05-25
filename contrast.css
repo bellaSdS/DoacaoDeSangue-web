@@ -455,7 +455,7 @@ body.alto-contraste {
     filter: invert(1);
 }
 
-.screen-title {
+.span.screen-title {
   position: absolute;
   width: 1px;
   height: 1px;
