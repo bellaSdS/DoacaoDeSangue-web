@@ -412,29 +412,47 @@ async function irAgendamentos() {
   ir('screen-agendamentos');
 }
 
-async function renderAgendamentos() {
-  const lista = document.getElementById('historico-agendamentos');
-  const { data: ags, error } = await client
-    .from('agendamentos').select('*').eq('usuario_email', usuarioLogado.email);
+lista.innerHTML = ags.map(a => {
 
-  if (error || !ags || ags.length === 0) {
-    lista.innerHTML = `<div class="empty-state"><div class="empty-icon">📅</div><p>Nenhum agendamento encontrado.</p></div>`;
-    return;
-  }
+  const [ano, mes, dia] =
+    a.data.split('-');
 
-  lista.innerHTML = ags.map(a => {
-    const [ano, mes, dia] = a.data.split('-');
-    return `
-      <div class="agendamento-item" id="ag-item-${a.id}" onclick="selecionarAg(${a.id})">
-        <div>
-          <div class="ag-date">${dia}/${mes}/${ano}</div>
-          <div class="ag-local">${a.local}</div>
+  return `
+
+    <div class="agendamento-item"
+         id="ag-item-${a.id}"
+         onclick="selecionarAg(${a.id})">
+
+      <div>
+
+        <div class="ag-date">
+          ${dia}/${mes}/${ano}
         </div>
-        <div class="ag-hora">${a.horario}</div>
+
+        <div class="ag-local">
+          🏥 ${a.local}
+        </div>
+
+        <div class="ag-info-extra">
+          📍 ${a.endereco},
+          ${a.cidade} — ${a.estado}
+        </div>
+
+        <div class="ag-info-extra">
+          🕐 Atendimento:
+          ${a.horario_atendimento}
+        </div>
+
       </div>
-    `;
-  }).join('');
-}
+
+      <div class="ag-hora">
+        ${a.horario}
+      </div>
+
+    </div>
+  `;
+
+}).join('');
 
 function selecionarAg(id) {
   document.querySelectorAll('.agendamento-item').forEach(el => el.classList.remove('selected'));
