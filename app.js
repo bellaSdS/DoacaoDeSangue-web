@@ -95,7 +95,7 @@ function anunciar(texto) {
 
 function inicializarLeituraAcessivel() {
   
-  document.body.addEventListener('mouseover', (e) => {
+  document.body.addEventListener('mouseenter', (e) => {
     if (!audioAtivo) return;
 
     e.stopPropagation();
