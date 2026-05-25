@@ -256,7 +256,7 @@ hr.divider { border: none; border-top: 1px solid var(--border); margin: 1.25rem 
   line-height:1.4;
 }
 
-.span.screen-title {
+.sr-only {
   position: absolute;
   width: 1px;
   height: 1px;
