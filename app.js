@@ -149,12 +149,8 @@ function ativarLeitorNaTelaAtual(telaAtiva) {
       }
     };
 
-    // Aplica os gatilhos de entrada e saída
-    el.onmouseenter = iniciarDisparo;
     el.onfocus = iniciarDisparo;
-    
     el.onmouseleave = interromperDisparo;
-    el.onblur = interromperDisparo;
   });
 }
 
