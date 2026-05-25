@@ -451,6 +451,6 @@ body.alto-contraste {
     filter: invert(1);
 }
 
-#ag-hora::-webkit-calendar-picker-indicator {
+#ag-horario::-webkit-calendar-picker-indicator {
     filter: invert(1);
 }
