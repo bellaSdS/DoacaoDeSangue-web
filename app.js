@@ -17,7 +17,7 @@ const LIMITE_CRITICO = 5; // bolsas abaixo deste valor disparam alerta
 /* ──────────── ACESSIBILIDADE — CONTRASTE DE CORES ──────────── */
 let contrasteAtivo = false;
 
-function toggleContraste() {
+function ativarContraste() {
   contrasteAtivo = !contrasteAtivo;
   document.body.classList.toggle('alto-contraste', contrasteAtivo);
   const btn = document.getElementById('btn-contraste');
@@ -57,59 +57,6 @@ const contraste = calcularContraste("#ffffff", "#ff0000");
 if (contraste < 4.5) {
   console.warn("Contraste insuficiente (WCAG AA)");
 }
-
-/* ──────────── ACESSIBILIDADE — TRANSCRIÇÃO DE ÁUDIO (TTS) ──────────── */
-
-let audioAtivo = false;
-let synth = window.speechSynthesis;
-let vozPT = null;
-
-// Carrega vozes e prioriza pt-BR
-function carregarVoz() {
-  const vozes = synth.getVoices();
-  vozPT = vozes.find(v => v.lang === 'pt-BR') ||
-          vozes.find(v => v.lang.startsWith('pt')) ||
-          vozes[0] || null;
-}
-if (synth.onvoiceschanged !== undefined) synth.onvoiceschanged = carregarVoz;
-carregarVoz();
-
-function toggleAudio() {
-  audioAtivo = !audioAtivo;
-  const btn = document.getElementById('btn-audio');
-  btn.setAttribute('aria-pressed', audioAtivo);
-  btn.classList.toggle('acess-btn-ativo', audioAtivo);
-  localStorage.setItem('audio', audioAtivo ? '1' : '0');
-  falar(audioAtivo ? 'Narração por voz ativada' : 'Narração por voz desativada');
-}
-
-function falar(texto) {
-  if (!audioAtivo || !synth) return;
-  synth.cancel();
-  const utter = new SpeechSynthesisUtterance(texto);
-  utter.lang = 'pt-BR';
-  if (vozPT) utter.voice = vozPT;
-  utter.rate = 1;
-  utter.pitch = 1;
-  synth.speak(utter);
-}
-
-// Narração automática ao trocar de tela
-function anunciar(texto) {
-  document.getElementById('aria-announcer').textContent = '';
-  setTimeout(() => { document.getElementById('aria-announcer').textContent = texto; }, 50);
-  falar(texto);
-}
-
-// Restaura preferências salvas ao carregar
-(function restaurarPreferencias() {
-  if (localStorage.getItem('contraste') === '1') toggleContraste();
-  if (localStorage.getItem('audio') === '1') {
-    audioAtivo = true;
-    const btn = document.getElementById('btn-audio');
-    if (btn) { btn.setAttribute('aria-pressed', true); btn.classList.add('acess-btn-ativo'); }
-  }
-})();
 
 /* ──────────── TRANSCRIÇÃO DA TELA ──────────── */
 
