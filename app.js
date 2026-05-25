@@ -322,18 +322,56 @@ function selecionarHemocentro(id) {
 /* ──────────── AGENDAR ──────────── */
 
 function irAgendar() {
-  const hoje = new Date().toISOString().split('T')[0];
+
+  const hoje =
+    new Date().toISOString().split('T')[0];
+
   document.getElementById('ag-data').min = hoje;
+
   document.getElementById('ag-data').value = '';
+
   document.getElementById('ag-horario').value = '';
 
   const h = hemocentroSelecionado;
-  document.getElementById('hemo-selecionado-info').innerHTML = `
+
+  // ALERTAS DE ESTOQUE
+  const estoque = h.estoque || {};
+
+  const alertas =
+    TIPOS_SANGUINEOS.filter(tipo =>
+      (estoque[tipo] || 0) < LIMITE_CRITICO
+    );
+
+  const alertaHTML = alertas.length
+    ? `
+      <div class="hemo-alerta-mini">
+        ⚠️ Necessita:
+        ${alertas.join(', ')}
+      </div>
+    `
+    : '';
+
+  document.getElementById(
+    'hemo-selecionado-info'
+  ).innerHTML = `
+
     <div class="hemo-card-info">
-      <div class="hemo-card-nome">${h.nome}</div>
-      <div class="hemo-card-end">📍 ${h.endereco}, ${h.cidade} — ${h.estado}</div>
-      <div class="hemo-card-hor">🕐 ${h.horario}</div>
+
+      <div class="hemo-card-nome">
+        ${h.nome}
+      </div>
+
+      <div class="hemo-card-end">
+        📍 ${h.endereco},
+        ${h.cidade} — ${h.estado}
+      </div>
+
+      <div class="hemo-card-hor">
+        🕐 ${h.horario}
+      </div>
+
       ${alertaHTML}
+
     </div>
   `;
 

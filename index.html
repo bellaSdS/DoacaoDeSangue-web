@@ -146,14 +146,12 @@
       <div class="form-group">
         <label>Cidade ou endereço</label>
         <div class="busca-input-row">
-          <icon class="busca-icon">🔍</icon>
           <input type="text" id="busca-cidade" placeholder="Ex: São Paulo, Campinas..." oninput="filtrarHemocentros()">
+          <div class="busca-icon-container"><icon class="busca-icon" position="right">🔍</icon></div>
         </div>
       </div>
     </div>
-    <div id="lista-hemocentros" class="scroll-area hemo-lista">
-      <div class="empty-state"><div class="empty-icon">🔍</div><p>Digite uma cidade para buscar hemocentros.</p></div>
-    </div>
+    <div id="lista-hemocentros" class="scroll-area"></div>
   </div>
 </div>
 

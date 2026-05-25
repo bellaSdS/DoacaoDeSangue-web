@@ -151,8 +151,7 @@ hr.divider { border: none; border-top: 1px solid var(--border); margin: 1.25rem 
 .busca-container { margin-bottom: 1rem; }
 .busca-input-row { display: flex; gap: 0.5rem; }
 .busca-input-row input { flex: 1; }
-.btn-busca { background: var(--red); color: white; border: none; border-radius: var(--radius-sm); padding: 0 1rem; font-size: 1.2rem; cursor: pointer; flex-shrink: 0; transition: background 0.2s; }
-.btn-busca:hover { background: var(--red-dark); }
+.busca-icon-container { display: flex; align-items: center; }
 .hemo-lista { max-height: 380px; }
 .hemo-card-busca { background: var(--cream); border: 1.5px solid var(--border); border-radius: var(--radius-sm); padding: 1rem; margin-bottom: 0.75rem; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }
 .hemo-card-busca:hover { border-color: var(--red); background: var(--red-light); transform: translateX(3px); }
