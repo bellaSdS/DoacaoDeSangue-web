@@ -390,6 +390,10 @@ async function confirmarAgendamento() {
     data,
     horario,
     local: hemocentroSelecionado.nome,
+    endereco: hemocentroSelecionado.endereco,
+    cidade: hemocentroSelecionado.cidade,
+    estado: hemocentroSelecionado.estado,
+    horario_atendimento: hemocentroSelecionado.horario,
     hemocentro_id: hemocentroSelecionado.id
   }]);
 
