@@ -134,8 +134,11 @@ window.addEventListener('DOMContentLoaded', inicializarLeituraAcessivel);
 /* ──────────── NAVEGAÇÃO ──────────── */
 
 function ir(id) {
+  const novaTela = document.getElementById(id);
+
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  document.getElementById(id).classList.add('active');
+  
+  novaTela.classList.add('active');
 
   const tituloTela = novaTela.querySelector('h2, .screen-title, h3')?.textContent || "Nova tela carregada";
   
