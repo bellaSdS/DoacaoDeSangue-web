@@ -40,7 +40,6 @@ let audioAtivo = false;
 let synth = window.speechSynthesis;
 let vozPT = null;
 
-// Carrega vozes e prioriza pt-BR
 function carregarVoz() {
   const vozes = synth.getVoices();
   vozPT = vozes.find(v => v.lang === 'pt-BR') ||
@@ -54,45 +53,43 @@ function toggleAudio() {
   audioAtivo = !audioAtivo;
 
   const btn = document.getElementById('btn-audio');
-  btn.setAttribute('aria-pressed', audioAtivo);
-  btn.classList.toggle('acess-btn-ativo', audioAtivo);
+  if (btn) {
+    btn.setAttribute('aria-pressed', audioAtivo);
+    btn.classList.toggle('acess-btn-ativo', audioAtivo);
+  }
 
   localStorage.setItem('audio', audioAtivo ? '1' : '0');
 
-  falar(
-    audioAtivo ? 'Narração por voz ativada' : 'Narração por voz desativada',
-    true
-  );
+  falar(audioAtivo ? 'Narração por voz ativada' : 'Narração por voz desativada', true);
 }
 
 function falar(texto, forcar = false) {
   if ((!audioAtivo && !forcar) || !synth) return;
 
-  synth.cancel();
+  if (forcar) {
+    synth.cancel();
+  } 
+  
+  else if (synth.speaking) {
+    return; 
+  }
+
   const utter = new SpeechSynthesisUtterance(texto);
   utter.lang = 'pt-BR';
   if (vozPT) utter.voice = vozPT;
-  utter.rate = 1;
+  utter.rate = 1.1; 
   utter.pitch = 1;
   synth.speak(utter);
 }
 
-// Narração automática ao trocar de tela
 function anunciar(texto) {
-  document.getElementById('aria-announcer').textContent = '';
-  setTimeout(() => { document.getElementById('aria-announcer').textContent = texto; }, 50);
-  falar(texto);
-}
-
-// Restaura preferências salvas ao carregar
-(function restaurarPreferencias() {
-  if (localStorage.getItem('contraste') === '1') toggleContraste();
-  if (localStorage.getItem('audio') === '1') {
-    audioAtivo = true;
-    const btn = document.getElementById('btn-audio');
-    if (btn) { btn.setAttribute('aria-pressed', true); btn.classList.add('acess-btn-ativo'); }
+  const announcer = document.getElementById('aria-announcer');
+  if (announcer) {
+    announcer.textContent = '';
+    setTimeout(() => { announcer.textContent = texto; }, 50);
   }
-})();
+  falar(texto, true);
+}
 
 /* ──────────── LEITURA AUTOMÁTICA DE ELEMENTOS (APRIMORADA) ──────────── */
 
@@ -113,7 +110,7 @@ function inicializarLeituraAcessivel() {
 
     if (el.tagName === 'INPUT') {
       const label = el.previousElementSibling?.tagName === 'LABEL' ? el.previousElementSibling.textContent : "";
-      textoParaFalar = `Campo de entrada: ${label}. ${el.placeholder || ''}`;
+      textoParaFalar = `Campo de entrada: ${label}. Exemplo: ${el.placeholder || ''}`;
     } 
   
     else if (el.tagName === 'SELECT') {

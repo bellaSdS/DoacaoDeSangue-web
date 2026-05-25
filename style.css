@@ -256,6 +256,14 @@ hr.divider { border: none; border-top: 1px solid var(--border); margin: 1.25rem 
   line-height:1.4;
 }
 
+#ag-data::-webkit-calendar-picker-indicator {
+    filter: invert(1);
+}
+
+#ag-horario::-webkit-calendar-picker-indicator {
+    filter: invert(1);
+}
+
 .sr-only {
   position: absolute;
   width: 1px;
