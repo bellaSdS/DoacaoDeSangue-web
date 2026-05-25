@@ -94,40 +94,67 @@ function anunciar(texto) {
   }
 })();
 
-/* ──────────── LEITURA AUTOMÁTICA DE ELEMENTOS ──────────── */
+/* ──────────── LEITURA AUTOMÁTICA DE ELEMENTOS (APRIMORADA) ──────────── */
 
 function inicializarLeituraAcessivel() {
+  
+  document.body.addEventListener('mouseover', (e) => {
+    if (!audioAtivo) return;
 
-  const elementosFocaveis = document.querySelectorAll('button, input, select, a, .escolha-card, .hemo-card-busca, h2, h3, .screen p, .screen span, strong');
+    e.stopPropagation();
 
-  elementosFocaveis.forEach(el => {
-    const dispararLeitura = (e) => {
-      if (!audioAtivo) return;
-      
-      // Impede que o som seja duplicado se passar o mouse em elementos filhos
-      e.stopPropagation();
+    const el = e.target;
 
-      let textoParaFalar = "";
+    if (el.closest('.acess-bar') || el.classList.contains('screen') || el.classList.contains('app')) {
+      return;
+    }
 
-      if (el.tagName === 'INPUT') {
-        const label = el.previousElementSibling?.tagName === 'LABEL' ? el.previousElementSibling.textContent : "";
-        textoParaFalar = `Campo de entrada: ${label}. ${el.placeholder || ''}`;
-      } else if (el.tagName === 'SELECT') {
-        const label = el.previousElementSibling?.tagName === 'LABEL' ? el.previousElementSibling.textContent : "";
-        textoParaFalar = `Caixa de seleção: ${label}`;
-      } else {
-        textoParaFalar = el.textContent || el.innerText;
-      }
+    let textoParaFalar = "";
 
-      if (textoParaFalar.trim().length > 0) {
-        falar(textoParaFalar);
-      }
-    };
+    if (el.tagName === 'INPUT') {
+      const label = el.previousElementSibling?.tagName === 'LABEL' ? el.previousElementSibling.textContent : "";
+      textoParaFalar = `Campo de entrada: ${label}. ${el.placeholder || ''}`;
+    } 
+  
+    else if (el.tagName === 'SELECT') {
+      const label = el.previousElementSibling?.tagName === 'LABEL' ? el.previousElementSibling.textContent : "";
+      textoParaFalar = `Caixa de seleção: ${label}`;
+    } 
 
-    el.addEventListener('mouseenter', dispararLeitura);
-    el.addEventListener('focus', dispararLeitura);
+    else {
+      textoParaFalar = el.textContent || el.innerText;
+    }
+
+    if (textoParaFalar.trim().length > 0 && textoParaFalar.length < 300) {
+      falar(textoParaFalar.trim());
+    }
+  });
+
+  // Ouvinte global para navegação via teclado (Teclando TAB)
+  document.body.addEventListener('focusin', (e) => {
+    if (!audioAtivo) return;
+    
+    const el = e.target;
+    let textoParaFalar = "";
+
+    if (el.tagName === 'INPUT') {
+      const label = el.previousElementSibling?.tagName === 'LABEL' ? el.previousElementSibling.textContent : "";
+      textoParaFalar = `Campo de entrada: ${label}. ${el.placeholder || ''}`;
+    } else if (el.tagName === 'SELECT') {
+      const label = el.previousElementSibling?.tagName === 'LABEL' ? el.previousElementSibling.textContent : "";
+      textoParaFalar = `Caixa de seleção: ${label}`;
+    } else {
+      textoParaFalar = el.textContent || el.innerText;
+    }
+
+    if (textoParaFalar.trim().length > 0 && textoParaFalar.length < 300) {
+      falar(textoParaFalar.trim());
+    }
   });
 }
+
+// Inicializa os ouvintes globais assim que a página carregar
+window.addEventListener('DOMContentLoaded', inicializarLeituraAcessivel);
 
 /* ──────────── NAVEGAÇÃO ──────────── */
 
