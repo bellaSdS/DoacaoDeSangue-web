@@ -91,7 +91,7 @@ function anunciar(texto) {
   falar(texto, true);
 }
 
-/* ──────────── LEITURA AUTOMÁTICA DE ELEMENTOS ──────────── */
+/* ──────────── LEITURA AUTOMÁTICA DE ELEMENTOS (APRIMORADA) ──────────── */
 
 function inicializarLeituraAcessivel() {
   // Ouvinte global para quando o mouse entra em QUALQUER elemento da página
