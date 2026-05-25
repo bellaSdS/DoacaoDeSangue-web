@@ -95,14 +95,12 @@ function anunciar(texto) {
 
 function inicializarLeituraAcessivel() {
   
-  document.body.addEventListener('mouseover', (e) => {
+  function processarEleitura(e) {
     if (!audioAtivo) return;
-
-    e.stopPropagation();
 
     const el = e.target;
 
-    if (el.closest('.acess-bar') || el.classList.contains('screen') || el.classList.contains('app')) {
+    if (!el || el.closest('.acess-bar') || el.classList.contains('screen') || el.classList.contains('app') || el.id === 'aria-announcer') {
       return;
     }
 
@@ -112,42 +110,27 @@ function inicializarLeituraAcessivel() {
       const label = el.previousElementSibling?.tagName === 'LABEL' ? el.previousElementSibling.textContent : "";
       textoParaFalar = `Campo de entrada: ${label}. ${el.placeholder || ''}`;
     } 
-  
+
     else if (el.tagName === 'SELECT') {
       const label = el.previousElementSibling?.tagName === 'LABEL' ? el.previousElementSibling.textContent : "";
       textoParaFalar = `Caixa de seleção: ${label}`;
     } 
 
     else {
-      textoParaFalar = el.textContent || el.innerText;
+      textoParaFalar = el.innerText || el.textContent;
     }
 
-    if (textoParaFalar.trim().length > 0 && textoParaFalar.length < 300) {
+    if (textoParaFalar && textoParaFalar.trim().length > 0 && textoParaFalar.length < 250) {
+      e.stopPropagation();
       falar(textoParaFalar.trim());
     }
-  });
+  }
 
-  // Ouvinte global para navegação via teclado (Teclando TAB)
-  document.body.addEventListener('focusin', (e) => {
-    if (!audioAtivo) return;
-    
-    const el = e.target;
-    let textoParaFalar = "";
+  // Captura o mouse EXATAMENTE no momento em que ele entra em qualquer elemento
+  document.body.addEventListener('mouseover', processarEleitura);
 
-    if (el.tagName === 'INPUT') {
-      const label = el.previousElementSibling?.tagName === 'LABEL' ? el.previousElementSibling.textContent : "";
-      textoParaFalar = `Campo de entrada: ${label}. ${el.placeholder || ''}`;
-    } else if (el.tagName === 'SELECT') {
-      const label = el.previousElementSibling?.tagName === 'LABEL' ? el.previousElementSibling.textContent : "";
-      textoParaFalar = `Caixa de seleção: ${label}`;
-    } else {
-      textoParaFalar = el.textContent || el.innerText;
-    }
-
-    if (textoParaFalar.trim().length > 0 && textoParaFalar.length < 300) {
-      falar(textoParaFalar.trim());
-    }
-  });
+  // Captura o foco do teclado (Navegação por TAB)
+  document.body.addEventListener('focusin', processarEleitura);
 }
 
 // Inicializa os ouvintes globais assim que a página carregar
