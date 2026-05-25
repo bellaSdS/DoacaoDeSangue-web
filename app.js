@@ -28,35 +28,10 @@ function ativarContraste() {
   anunciar(contrasteAtivo ? 'Alto contraste ativado' : 'Alto contraste desativado');
 }
 
-function calcularContraste(hex1, hex2) {
-  const luminancia = (hex) => {
-    const rgb = parseInt(hex.replace('#',''), 16);
-    let r = (rgb >> 16) & 255;
-    let g = (rgb >> 8) & 255;
-    let b = rgb & 255;
-
-    const a = [r, g, b].map(v => {
-      v /= 255;
-      return v <= 0.03928
-        ? v / 12.92
-        : Math.pow((v + 0.055) / 1.055, 2.4);
-    });
-
-    return 0.2126 * a[0] + 0.7152 * a[1] + 0.0722 * a[2];
-  };
-
-  const L1 = luminancia(hex1);
-  const L2 = luminancia(hex2);
-
-  const ratio = (Math.max(L1, L2) + 0.05) / (Math.min(L1, L2) + 0.05);
-
-  return ratio;
-}
-
-const contraste = calcularContraste("#ffffff", "#ff0000");
-
-if (contraste < 4.5) {
-  console.warn("Contraste insuficiente (WCAG AA)");
+// Restaurar preferência de contraste salva
+if (localStorage.getItem('contraste') === '1') {
+  document.body.classList.add('alto-contraste');
+  contrasteAtivo = true;
 }
 
 /* ──────────── ACESSIBILIDADE — TRANSCRIÇÃO DE ÁUDIO (TTS) ──────────── */

@@ -1,0 +1,448 @@
+.alto-contraste,
+body.alto-contraste {
+  --red:        #FF6B6B; /* vermelho claro → legível sobre preto (4.6:1) */
+  --red-dark:   #FF9999; /* vermelho mais claro para títulos (7.2:1)     */
+  --red-light:  #3A0000; /* fundo vermelho escuro em vez de rosa claro    */
+  --red-mid:    #FF6B6B;
+  --vinho:      #FF9999;
+  --cream:      #111111; /* fundo geral escuro                            */
+  --white:      #1A1A1A; /* "branco" → cinza muito escuro para cards      */
+  --text:       #FFFFFF; /* texto principal: branco puro (21:1)           */
+  --text-muted: #CCCCCC; /* texto secundário: cinza claro (12:1)          */
+  --border:     rgba(255,255,255,0.4);
+  --shadow:     0 4px 24px rgba(0,0,0,0.8);
+  --orange:     #FFD54F; /* alerta: amarelo forte sobre preto (12:1)      */
+  --green:      #69FF47; /* OK: verde neon sobre preto (8:1)              */
+  --green-light: #003300;
+}
+
+.alto-contraste body {
+  background: #000000;
+  color: #FFFFFF;
+}
+
+.alto-contraste .app {
+  background: #000000;
+}
+
+.alto-contraste #screen-login {
+  background: linear-gradient(to top, #1A0000 0%, #3A0000 50%, #000000 100%);
+  border: 2px solid #FFFFFF;
+}
+
+.alto-contraste .login-box {
+  background: #1A1A1A;
+  border: 2px solid #FFFFFF;
+  backdrop-filter: none;
+}
+
+.alto-contraste .login-box h2 {
+  color: #FF9999;
+}
+
+.alto-contraste .login-link {
+  color: #FFFFFF;
+  text-shadow: none;
+}
+
+.alto-contraste .login-link a {
+  color: #FFD54F;
+  text-decoration: underline;
+  font-weight: 700;
+}
+
+.alto-contraste .card {
+  background: #1A1A1A;
+  border: 2px solid #FFFFFF;
+  box-shadow: none;
+}
+
+.alto-contraste label {
+  color: #CCCCCC;
+}
+
+.alto-contraste input,
+.alto-contraste select {
+  background: #000000;
+  color: #FFFFFF;
+  border: 2px solid #FFFFFF;
+}
+
+.alto-contraste input::placeholder {
+  color: #999999;
+}
+
+.alto-contraste input:focus,
+.alto-contraste select:focus {
+  background: #111111;
+  border-color: #FFD54F;
+  outline: 3px solid #FFD54F;
+  outline-offset: 1px;
+}
+
+.alto-contraste .btn-primary {
+  background: #CC0000;
+  color: #FFFFFF;
+  border: 2px solid #FFFFFF;
+  box-shadow: none;
+  font-weight: 700;
+}
+
+.alto-contraste .btn-primary:hover {
+  background: #FF0000;
+  color: #FFFFFF;
+}
+
+.alto-contraste .btn-secondary {
+  background: #000000;
+  color: #FFD54F;
+  border: 2px solid #FFD54F;
+  font-weight: 700;
+}
+
+.alto-contraste .btn-secondary:hover {
+  background: #FFD54F;
+  color: #000000;
+}
+
+.alto-contraste .btn-danger {
+  background: #000000;
+  color: #FF6B6B;
+  border: 2px solid #FF6B6B;
+  font-weight: 700;
+}
+
+.alto-contraste .btn-danger:hover {
+  background: #FF6B6B;
+  color: #000000;
+}
+
+/* Foco visível em todos os botões */
+.alto-contraste .btn:focus,
+.alto-contraste button:focus {
+  outline: 3px solid #FFD54F;
+  outline-offset: 2px;
+}
+
+.alto-contraste .back-btn {
+  background: #3A0000;
+  color: #FF9999;
+  border: 2px solid #FF9999;
+}
+
+.alto-contraste .back-btn:hover {
+  background: #FF9999;
+  color: #000000;
+}
+
+.alto-contraste .screen-title {
+  color: #FF9999;
+}
+
+.alto-contraste .menu-header {
+  background: #3A0000;
+  border-bottom: 2px solid #FFFFFF;
+}
+
+.alto-contraste .menu-header p {
+  color: #CCCCCC;
+  opacity: 1;
+}
+
+.alto-contraste .menu-header h2 {
+  color: #FFFFFF;
+}
+
+.alto-contraste .menu-header .blood-type-badge {
+  background: rgba(255,255,255,0.25);
+  color: #FFFFFF;
+  border: 1px solid rgba(255,255,255,0.6);
+}
+
+.alto-contraste .menu-grid {
+  background: #1A1A1A;
+  border: 2px solid #FFFFFF;
+  border-top: none;
+  box-shadow: none;
+}
+
+.alto-contraste .menu-item {
+  background: #111111;
+  border: 2px solid rgba(255,255,255,0.3);
+}
+
+.alto-contraste .menu-item:hover {
+  background: #3A0000;
+  border-color: #FF9999;
+  box-shadow: none;
+}
+
+.alto-contraste .menu-item span {
+  color: #FFFFFF;
+}
+
+.alto-contraste .toast {
+  background: #3A0000;
+  color: #FFFFFF;
+  border: 2px solid #FFFFFF;
+}
+
+.alto-contraste .perfil-avatar {
+  background: #CC0000;
+  border: 2px solid #FFFFFF;
+}
+
+.alto-contraste .perfil-info h2 {
+  color: #FF9999;
+}
+
+.alto-contraste .perfil-info p {
+  color: #CCCCCC;
+}
+
+.alto-contraste .blood-badge {
+  background: #CC0000;
+  color: #FFFFFF;
+  border: 1px solid #FFFFFF;
+}
+
+.alto-contraste .info-card {
+  background: #111111;
+  border: 1px solid rgba(255,255,255,0.4);
+}
+
+.alto-contraste .info-card .label {
+  color: #CCCCCC;
+}
+
+.alto-contraste .info-card .value {
+  color: #FFFFFF;
+}
+
+.alto-contraste .agendamento-item {
+  background: #111111;
+  border: 1.5px solid rgba(255,255,255,0.3);
+}
+
+.alto-contraste .agendamento-item:hover {
+  background: #3A0000;
+  border-color: #FF9999;
+}
+
+.alto-contraste .agendamento-item.selected {
+  background: #3A0000;
+  border-color: #FF9999;
+  box-shadow: 0 0 0 3px rgba(255,153,153,0.4);
+}
+
+.alto-contraste .agendamento-item .ag-date {
+  color: #FFFFFF;
+}
+
+.alto-contraste .agendamento-item .ag-local {
+  color: #CCCCCC;
+}
+
+.alto-contraste .agendamento-item .ag-hora {
+  color: #FF9999;
+  font-weight: 700;
+}
+
+.alto-contraste .ag-info-extra {
+  color: #CCCCCC;
+}
+
+.alto-contraste .empty-state {
+  color: #CCCCCC;
+}
+
+.alto-contraste .scroll-area::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.4);
+}
+
+.alto-contraste .modal-overlay {
+  background: rgba(0,0,0,0.85);
+}
+
+.alto-contraste .modal {
+  background: #1A1A1A;
+  border: 2px solid #FFFFFF;
+  box-shadow: none;
+}
+
+.alto-contraste .modal h3 {
+  color: #FF9999;
+}
+
+.alto-contraste .modal p {
+  color: #CCCCCC;
+}
+
+.alto-contraste hr.divider {
+  border-top-color: rgba(255,255,255,0.3);
+}
+
+.alto-contraste .section-label {
+  color: #CCCCCC;
+}
+
+.alto-contraste .requisitos {
+  background: #111111;
+  border-color: rgba(255,255,255,0.3);
+  color: #CCCCCC;
+}
+
+.alto-contraste .escolha-card {
+  background: #111111;
+  border: 2px solid rgba(255,255,255,0.3);
+}
+
+.alto-contraste .escolha-card:hover {
+  background: #3A0000;
+  border-color: #FF9999;
+  box-shadow: none;
+}
+
+.alto-contraste .escolha-card h3 {
+  color: #FF9999;
+}
+
+.alto-contraste .escolha-card p {
+  color: #CCCCCC;
+}
+
+.alto-contraste .hemo-card-busca {
+  background: #111111;
+  border: 1.5px solid rgba(255,255,255,0.3);
+}
+
+.alto-contraste .hemo-card-busca:hover {
+  background: #3A0000;
+  border-color: #FF9999;
+}
+
+.alto-contraste .hemo-card-nome {
+  color: #FFFFFF;
+}
+
+.alto-contraste .hemo-card-end,
+.alto-contraste .hemo-card-hor {
+  color: #CCCCCC;
+}
+
+.alto-contraste .hemo-card-arrow {
+  color: #FF9999;
+}
+
+.alto-contraste .hemo-alerta-mini {
+  background: #3A2000;
+  color: #FFD54F;
+  border: 1px solid #FFD54F;
+}
+
+.alto-contraste .hemo-selecionado-card {
+  background: #3A0000;
+  border-color: rgba(255,153,153,0.6);
+}
+
+.alto-contraste .hemo-sel-nome {
+  color: #FF9999;
+}
+
+.alto-contraste .hemo-sel-end,
+.alto-contraste .hemo-sel-hor {
+  color: #CCCCCC;
+}
+
+.alto-contraste .estoque-item {
+  background: #111111;
+  border-color: rgba(255,255,255,0.3);
+}
+
+.alto-contraste .estoque-item.critico {
+  background: #2A1500;
+  border-color: #FFD54F;
+}
+
+.alto-contraste .estoque-tipo {
+  color: #FF9999;
+}
+
+.alto-contraste .estoque-badge-ok {
+  background: #003300;
+  color: #69FF47;
+  border: 1px solid #69FF47;
+}
+
+.alto-contraste .estoque-badge-alerta {
+  background: #2A1500;
+  color: #FFD54F;
+  border: 1px solid #FFD54F;
+}
+
+.alto-contraste .est-btn {
+  background: #3A0000;
+  color: #FF9999;
+  border: 1px solid #FF9999;
+}
+
+.alto-contraste .est-btn:hover {
+  background: #FF9999;
+  color: #000000;
+}
+
+.alto-contraste .est-input {
+  background: #000000;
+  color: #FFFFFF;
+  border-color: rgba(255,255,255,0.4);
+}
+
+.alto-contraste .est-input-critico {
+  color: #FFD54F;
+  border-color: #FFD54F;
+}
+
+.alto-contraste .btn-salvar-estoque {
+  background: #CC0000;
+  color: #FFFFFF;
+  border: 2px solid #FFFFFF;
+  font-weight: 700;
+}
+
+.alto-contraste .btn-salvar-estoque:hover {
+  background: #FF0000;
+}
+
+.alto-contraste .alerta-escassez {
+  background: #2A1500;
+  border-color: #FFD54F;
+}
+
+.alto-contraste .alerta-escassez strong {
+  color: #FFD54F;
+}
+
+.alto-contraste .alerta-escassez p {
+  color: #CCCCCC;
+}
+
+.alto-contraste #screen-main,
+.alto-contraste #screen-main-hemo,
+.alto-contraste #screen-perfil,
+.alto-contraste #screen-perfil-hemo,
+.alto-contraste #screen-editar-perfil,
+.alto-contraste #screen-editar-hemo,
+.alto-contraste #screen-agendar,
+.alto-contraste #screen-agendamentos,
+.alto-contraste #screen-agendamentos-hemo,
+.alto-contraste #screen-buscar-hemo {
+  background: #1A1A1A;
+  border-color: rgba(255,255,255,0.3);
+  box-shadow: none;
+}
+
+.alto-contraste .mensagem-estoque {
+  background: #003300;
+  border-color: #69FF47;
+  color: #69FF47;
+}
