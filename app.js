@@ -94,11 +94,52 @@ function anunciar(texto) {
   }
 })();
 
+/* ──────────── LEITURA AUTOMÁTICA DE ELEMENTOS ──────────── */
+
+function inicializarLeituraAcessivel() {
+  // Seleciona botões, campos de texto, links e cards clicáveis
+  const elementosFocaveis = document.querySelectorAll('button, input, select, a, .escolha-card, .hemo-card-busca, h2, h3');
+
+  elementosFocaveis.forEach(el => {
+    // Função que decide o que falar baseado no tipo de elemento
+    const dispararLeitura = () => {
+      if (!audioAtivo) return;
+
+      let textoParaFalar = "";
+
+      if (el.tagName === 'INPUT') {
+        const label = el.previousElementSibling?.tagName === 'LABEL' ? el.previousElementSibling.textContent : "";
+        textoParaFalar = `Campo de entrada: ${label}. ${el.placeholder || ''}`;
+      } else if (el.tagName === 'SELECT') {
+        const label = el.previousElementSibling?.tagName === 'LABEL' ? el.previousElementSibling.textContent : "";
+        textoParaFalar = `Caixa de seleção: ${label}`;
+      } else {
+        textoParaFalar = el.textContent || el.innerText;
+      }
+
+      falar(textoParaFalar);
+    };
+
+    // Lê quando o usuário passa o mouse por cima
+    el.addEventListener('mouseenter', dispararLeitura);
+    
+    // Lê quando o usuário usa o teclado (Tab) para navegar
+    el.addEventListener('focus', dispararLeitura);
+  });
+}
+
+// Executa a função assim que a página carregar
+window.addEventListener('DOMContentLoaded', inicializarLeituraAcessivel);
+
 /* ──────────── NAVEGAÇÃO ──────────── */
 
 function ir(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
+
+  const tituloTela = novaTela.querySelector('h2, .screen-title, h3')?.textContent || "Nova tela carregada";
+  
+  anunciar(`Entrou na tela: ${tituloTela}`);
 }
 
 /* ──────────── TOAST ──────────── */
