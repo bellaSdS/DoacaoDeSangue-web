@@ -97,13 +97,15 @@ function anunciar(texto) {
 /* ──────────── LEITURA AUTOMÁTICA DE ELEMENTOS ──────────── */
 
 function inicializarLeituraAcessivel() {
-  // Seleciona botões, campos de texto, links e cards clicáveis
-  const elementosFocaveis = document.querySelectorAll('button, input, select, a, .escolha-card, .hemo-card-busca, h2, h3');
+
+  const elementosFocaveis = document.querySelectorAll('button, input, select, a, .escolha-card, .hemo-card-busca, h2, h3, .screen p, .screen span, strong');
 
   elementosFocaveis.forEach(el => {
-    // Função que decide o que falar baseado no tipo de elemento
-    const dispararLeitura = () => {
+    const dispararLeitura = (e) => {
       if (!audioAtivo) return;
+      
+      // Impede que o som seja duplicado se passar o mouse em elementos filhos
+      e.stopPropagation();
 
       let textoParaFalar = "";
 
@@ -117,32 +119,14 @@ function inicializarLeituraAcessivel() {
         textoParaFalar = el.textContent || el.innerText;
       }
 
-      falar(textoParaFalar);
+      if (textoParaFalar.trim().length > 0) {
+        falar(textoParaFalar);
+      }
     };
 
-    // Lê quando o usuário passa o mouse por cima
     el.addEventListener('mouseenter', dispararLeitura);
-    
-    // Lê quando o usuário usa o teclado (Tab) para navegar
     el.addEventListener('focus', dispararLeitura);
   });
-}
-
-// Executa a função assim que a página carregar
-window.addEventListener('DOMContentLoaded', inicializarLeituraAcessivel);
-
-/* ──────────── NAVEGAÇÃO ──────────── */
-
-function ir(id) {
-  const novaTela = document.getElementById(id);
-
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  
-  novaTela.classList.add('active');
-
-  const tituloTela = novaTela.querySelector('h2, .screen-title, h3')?.textContent || "Nova tela carregada";
-  
-  anunciar(`Entrou na tela: ${tituloTela}`);
 }
 
 /* ──────────── TOAST ──────────── */
@@ -207,7 +191,11 @@ function limparLogin() {
 function abrirMain() {
   document.getElementById('main-nome').textContent = usuarioLogado.nome;
   document.getElementById('main-tipo').textContent = usuarioLogado.tipo_sanguineo;
+  
   ir('screen-main');
+
+  const textoBoasVindas = `Olá, ${usuarioLogado.nome}. Bem-vindo ao seu painel. Seu tipo sanguíneo cadastrado é ${usuarioLogado.tipo_sanguineo}.`;
+  anunciar(textoBoasVindas);
 }
 
 /* ──────────── MAIN HEMOCENTRO ──────────── */
