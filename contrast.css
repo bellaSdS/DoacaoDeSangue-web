@@ -447,8 +447,6 @@ body.alto-contraste {
   color: #69FF47;
 }
 
-.ag-data{
-  font-size:1.1rem;
-  font-weight:600;
-  color:var(--red-dark);
+#ag-data::-webkit-calendar-picker-indicator {
+    filter: invert(1);
 }
