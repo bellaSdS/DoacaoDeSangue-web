@@ -248,3 +248,10 @@ hr.divider { border: none; border-top: 1px solid var(--border); margin: 1.25rem 
 .mensagem-estoque.show{
   display:block;
 }
+
+.ag-info-extra{
+  font-size:0.85rem;
+  color:var(--text-muted);
+  margin-top:4px;
+  line-height:1.4;
+}
