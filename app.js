@@ -91,94 +91,83 @@ function anunciar(texto) {
   falar(texto, true);
 }
 
-/* ──────────── LEITURA AUTOMÁTICA DE ELEMENTOS (APRIMORADA) ──────────── */
+/* ──────────── LEITURA DE ACESSIBILIDADE FOCADA POR TELA ──────────── */
 
-function inicializarLeituraAcessivel() {
-  // Ouvinte global para quando o mouse entra em QUALQUER elemento da página
-  document.body.addEventListener('mouseover', (e) => {
-    if (!audioAtivo) return;
+function ativarLeitorNaTelaAtual(telaAtiva) {
+  if (!telaAtiva) return;
 
-    // Evita que o som se repita ao passar o mouse de um elemento filho para o pai
-    e.stopPropagation();
+  // Seleciona de forma cirúrgica os elementos de texto e interativos desta tela
+  const elementos = telaAtiva.querySelectorAll('button, input, select, a, p, span, strong, h2, h3, .escolha-card, .hemo-card-busca, .menu-item');
 
-    const el = e.target;
+  elementos.forEach(el => {
+    // Ignora a barra de acessibilidade fixa do topo e o anunciador invisível
+    if (el.closest('.acess-bar') || el.id === 'aria-announcer') return;
 
-    // Ignora a leitura das barras de acessibilidade e containers genéricos vazios
-    if (el.closest('.acess-bar') || el.classList.contains('screen') || el.classList.contains('app')) {
-      return;
-    }
+    // Remove ouvintes antigos para evitar que o áudio fique duplicado ou travado
+    el.onmouseenter = null;
+    el.onfocus = null;
 
-    let textoParaFalar = "";
+    // Define a ação exata de leitura para o elemento
+    const executarLeitura = (e) => {
+      if (!audioAtivo) return;
+      
+      // Impede de propagar para os blocos ou containers que ficam atrás do texto
+      e.stopPropagation();
 
-    // Trata campos de entrada (Inputs)
-    if (el.tagName === 'INPUT') {
-      const label = el.previousElementSibling?.tagName === 'LABEL' ? el.previousElementSibling.textContent : "";
-      textoParaFalar = `Campo de entrada: ${label}. ${el.placeholder || ''}`;
-    } 
-    // Trata caixas de seleção (Select)
-    else if (el.tagName === 'SELECT') {
-      const label = el.previousElementSibling?.tagName === 'LABEL' ? el.previousElementSibling.textContent : "";
-      textoParaFalar = `Caixa de seleção: ${label}`;
-    } 
-    // Trata textos normais, botões, spans, links, etc.
-    else {
-      textoParaFalar = el.textContent || el.innerText;
-    }
+      let textoParaFalar = "";
 
-    // Só fala se o texto não for vazio e não for gigante (como a tela inteira de uma vez)
-    if (textoParaFalar.trim().length > 0 && textoParaFalar.length < 300) {
-      falar(textoParaFalar.trim());
-    }
-  });
+      // Customização inteligente para campos de entrada (Inputs)
+      if (el.tagName === 'INPUT') {
+        const label = el.previousElementSibling?.tagName === 'LABEL' ? el.previousElementSibling.textContent : "";
+        textoParaFalar = `Campo: ${label}. ${el.placeholder || ''}`;
+      } 
+      // Customização para caixas de seleção (Selects)
+      else if (el.tagName === 'SELECT') {
+        const label = el.previousElementSibling?.tagName === 'LABEL' ? el.previousElementSibling.textContent : "";
+        textoParaFalar = `Caixa de seleção: ${label}`;
+      } 
+      // Elementos de texto normais, títulos e botões
+      else {
+        textoParaFalar = el.innerText || el.textContent;
+      }
 
-  // Ouvinte global para navegação via teclado (Teclando TAB)
-  document.body.addEventListener('focusin', (e) => {
-    if (!audioAtivo) return;
-    
-    const el = e.target;
-    let textoParaFalar = "";
+      // Segurança: Só fala se houver texto válido e descarta blocos de layout gigantes
+      if (textoParaFalar && textoParaFalar.trim().length > 0 && textoParaFalar.length < 250) {
+        falar(textoParaFalar.trim());
+      }
+    };
 
-    if (el.tagName === 'INPUT') {
-      const label = el.previousElementSibling?.tagName === 'LABEL' ? el.previousElementSibling.textContent : "";
-      textoParaFalar = `Campo de entrada: ${label}. ${el.placeholder || ''}`;
-    } else if (el.tagName === 'SELECT') {
-      const label = el.previousElementSibling?.tagName === 'LABEL' ? el.previousElementSibling.textContent : "";
-      textoParaFalar = `Caixa de seleção: ${label}`;
-    } else {
-      textoParaFalar = el.textContent || el.innerText;
-    }
-
-    if (textoParaFalar.trim().length > 0 && textoParaFalar.length < 300) {
-      falar(textoParaFalar.trim());
-    }
+    // Assina os eventos diretamente no escopo do elemento (Leve e imediato)
+    el.onmouseenter = executarLeitura;
+    el.onfocus = executarLeitura;
   });
 }
-
-// Inicializa os ouvintes globais assim que a página carregar
-window.addEventListener('DOMContentLoaded', inicializarLeituraAcessivel);
 
 /* ──────────── NAVEGAÇÃO ──────────── */
 
 function ir(id) {
   const novaTela = document.getElementById(id);
   
-  // Segurança: Se a tela não existir no HTML, avisa no console e não trava o sistema
   if (!novaTela) {
     console.error(`A tela com o ID "${id}" não foi encontrada no HTML.`);
     return;
   }
 
-  // Remove o active de todas as telas
+  // Remove a classe ativa de todas as telas
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   
-  // Ativa a nova tela
+  // Exibe a tela desejada
   novaTela.classList.add('active');
 
-  // Descobre o título da nova tela para narrar ao usuário (Acessibilidade)
-  const tituloTela = novaTela.querySelector('h2, .screen-title, h3')?.textContent || "Nova tela carregada";
+  // Busca o título estruturado da tela (.sr-only) ou o primeiro cabeçalho disponível
+  const elementoTitulo = novaTela.querySelector('.screen-title') || novaTela.querySelector('h2, h3');
+  const tituloTela = elementoTitulo?.textContent || "Painel Carregado";
   
-  // Anuncia a mudança de tela
+  // Anuncia a mudança de tela de forma limpa
   anunciar(`Entrou na tela: ${tituloTela}`);
+
+  // Mapeia os textos e botões especificamente desta tela que acabou de abrir
+  ativarLeitorNaTelaAtual(novaTela);
 }
 
 /* ──────────── TOAST ──────────── */
