@@ -27,7 +27,39 @@ function toggleContraste() {
   anunciar(contrasteAtivo ? 'Alto contraste ativado' : 'Alto contraste desativado');
 }
 
+function calcularContraste(hex1, hex2) {
+  const luminancia = (hex) => {
+    const rgb = parseInt(hex.replace('#',''), 16);
+    let r = (rgb >> 16) & 255;
+    let g = (rgb >> 8) & 255;
+    let b = rgb & 255;
+
+    const a = [r, g, b].map(v => {
+      v /= 255;
+      return v <= 0.03928
+        ? v / 12.92
+        : Math.pow((v + 0.055) / 1.055, 2.4);
+    });
+
+    return 0.2126 * a[0] + 0.7152 * a[1] + 0.0722 * a[2];
+  };
+
+  const L1 = luminancia(hex1);
+  const L2 = luminancia(hex2);
+
+  const ratio = (Math.max(L1, L2) + 0.05) / (Math.min(L1, L2) + 0.05);
+
+  return ratio;
+}
+
+const contraste = calcularContraste("#ffffff", "#ff0000");
+
+if (contraste < 4.5) {
+  console.warn("Contraste insuficiente (WCAG AA)");
+}
+
 /* ──────────── ACESSIBILIDADE — TRANSCRIÇÃO DE ÁUDIO (TTS) ──────────── */
+
 let audioAtivo = false;
 let synth = window.speechSynthesis;
 let vozPT = null;
@@ -78,6 +110,51 @@ function anunciar(texto) {
     if (btn) { btn.setAttribute('aria-pressed', true); btn.classList.add('acess-btn-ativo'); }
   }
 })();
+
+/* ──────────── TRANSCRIÇÃO DA TELA ──────────── */
+
+let textoTelaAtual = "";
+
+ /* Captura o conteúdo da tela ativa e transforma em texto acessível*/
+function transcreverTela() {
+  const telaAtiva = document.querySelector('.screen.active');
+  if (!telaAtiva) return;
+
+  let texto = "";
+
+  const elementos = telaAtiva.querySelectorAll('h1, h2, h3, p, label, li, .screen-title');
+
+  elementos.forEach(el => {
+    const t = el.innerText?.trim();
+
+    if (t && t.length > 1 && t.length < 250) {
+      texto += t + ". ";
+    }
+  });
+
+  if (!texto.trim()) {
+    toast("Nada para transcrever nesta tela.");
+    return;
+  }
+
+  abrirTranscricaoTela(texto);
+}
+
+
+function abrirTranscricaoTela(texto) {
+  textoTelaAtual = texto;
+
+  document.getElementById('transcricao-tela-conteudo').textContent = texto;
+
+  abrirModal('modal-transcricao-tela');
+  anunciar("Transcrição da tela aberta");
+}
+
+/* Lê a transcrição em voz alta usando seu sistema TTS*/
+function falarTranscricaoTela() {
+  if (!textoTelaAtual) return;
+  falar(textoTelaAtual);
+}
 
 /* ──────────── NAVEGAÇÃO ──────────── */
 

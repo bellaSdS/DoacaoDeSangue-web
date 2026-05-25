@@ -540,6 +540,27 @@
 
 <div class="toast" id="toast"></div>
 
+<!-- TRANSCRIÇÃO DA TELA -->
+<div class="modal-overlay" id="modal-transcricao-tela">
+  <div class="modal" style="max-width: 700px;">
+    <h3>Transcrição da Tela</h3>
+
+    <div id="transcricao-tela-conteudo"
+         style="max-height: 60vh; overflow:auto; white-space: pre-wrap; line-height:1.5;">
+    </div>
+
+    <div class="modal-btns">
+      <button class="btn btn-primary" onclick="falarTranscricaoTela()">
+        🔊 Ouvir
+      </button>
+
+      <button class="btn btn-secondary" onclick="fecharModal('modal-transcricao-tela')">
+        Fechar
+      </button>
+    </div>
+  </div>
+</div>
+
 <!-- LEITOR DE TELA INVISÍVEL -->
 <div id="aria-announcer" aria-live="assertive" aria-atomic="true"style="position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden;"></div>
 

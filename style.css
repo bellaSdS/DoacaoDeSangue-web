@@ -255,3 +255,30 @@ hr.divider { border: none; border-top: 1px solid var(--border); margin: 1.25rem 
   margin-top:4px;
   line-height:1.4;
 }
+
+/* ALTO CONTRASTE WCAG */
+.alto-contraste {
+  --bg: #000000;
+  --card: #111111;
+  --text: #ffffff;
+  --text-muted: #dddddd;
+  --primary: #ffff00;
+  --danger: #ff4444;
+}
+
+.alto-contraste body,
+.alto-contraste .app {
+  background: var(--bg);
+  color: var(--text);
+}
+
+.alto-contraste .card,
+.alto-contraste .login-box {
+  background: var(--card);
+  border: 2px solid #fff;
+}
+
+.alto-contraste button,
+.alto-contraste .btn {
+  border: 2px solid #fff;
+}
