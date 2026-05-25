@@ -446,3 +446,9 @@ body.alto-contraste {
   border-color: #69FF47;
   color: #69FF47;
 }
+
+.ag-data{
+  font-size:1.1rem;
+  font-weight:600;
+  color:var(--red-dark);
+}
