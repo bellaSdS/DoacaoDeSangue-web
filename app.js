@@ -111,51 +111,6 @@ function anunciar(texto) {
   }
 })();
 
-/* ──────────── TRANSCRIÇÃO DA TELA ──────────── */
-
-let textoTelaAtual = "";
-
- /* Captura o conteúdo da tela ativa e transforma em texto acessível*/
-function transcreverTela() {
-  const telaAtiva = document.querySelector('.screen.active');
-  if (!telaAtiva) return;
-
-  let texto = "";
-
-  const elementos = telaAtiva.querySelectorAll('h1, h2, h3, p, label, li, .screen-title');
-
-  elementos.forEach(el => {
-    const t = el.innerText?.trim();
-
-    if (t && t.length > 1 && t.length < 250) {
-      texto += t + ". ";
-    }
-  });
-
-  if (!texto.trim()) {
-    toast("Nada para transcrever nesta tela.");
-    return;
-  }
-
-  abrirTranscricaoTela(texto);
-}
-
-
-function abrirTranscricaoTela(texto) {
-  textoTelaAtual = texto;
-
-  document.getElementById('transcricao-tela-conteudo').textContent = texto;
-
-  abrirModal('modal-transcricao-tela');
-  anunciar("Transcrição da tela aberta");
-}
-
-/* Lê a transcrição em voz alta usando seu sistema TTS*/
-function falarTranscricaoTela() {
-  if (!textoTelaAtual) return;
-  falar(textoTelaAtual);
-}
-
 /* ──────────── NAVEGAÇÃO ──────────── */
 
 function ir(id) {
