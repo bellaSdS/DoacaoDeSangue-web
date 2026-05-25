@@ -15,6 +15,7 @@ const TIPOS_SANGUINEOS = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
 const LIMITE_CRITICO = 5; // bolsas abaixo deste valor disparam alerta
 
 /* ──────────── ACESSIBILIDADE — CONTRASTE DE CORES ──────────── */
+
 let contrasteAtivo = false;
 
 function ativarContraste() {
@@ -140,41 +141,41 @@ async function fazerLogin() {
   const email = document.getElementById('login-email').value.trim();
   const senha = document.getElementById('login-senha').value;
 
-  if (!email || !senha) { toast('Preencha todos os campos!'); return; }
+  console.log("Tentando login:", email, senha);
 
-  // Tenta login como doador
-  const { data: user } = await client
+  const { data: user, error } = await client
     .from('usuarios')
     .select('*')
     .eq('email', email)
     .eq('senha', senha)
     .maybeSingle();
 
+  console.log("USER:", user);
+  console.log("ERROR:", error);
+
   if (user) {
     usuarioLogado = user;
-    hemocentroLogado = null;
     abrirMain();
-    limparLogin();
     return;
   }
 
-  // Tenta login como hemocentro
-  const { data: hemo } = await client
+  const { data: hemo, error: error2 } = await client
     .from('hemocentros')
     .select('*')
     .eq('email', email)
     .eq('senha', senha)
     .maybeSingle();
 
+  console.log("HEMO:", hemo);
+  console.log("ERROR2:", error2);
+
   if (hemo) {
     hemocentroLogado = hemo;
-    usuarioLogado = null;
     abrirMainHemo();
-    limparLogin();
     return;
   }
 
-  toast('E-mail ou senha incorretos!');
+  toast('Login inválido!');
 }
 
 function limparLogin() {
