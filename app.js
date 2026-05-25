@@ -394,6 +394,7 @@ async function confirmarAgendamento() {
     cidade: hemocentroSelecionado.cidade,
     estado: hemocentroSelecionado.estado,
     horario_atendimento: hemocentroSelecionado.horario,
+    telefone: hemocentroSelecionado.telefone,
     hemocentro_id: hemocentroSelecionado.id
   }]);
 
@@ -486,6 +487,11 @@ async function renderAgendamentos() {
             ${a.horario_atendimento || 'Não informado'}
           </div>
 
+          <div class="ag-info-extra">
+            📞 Telefone:
+            ${a.telefone || 'Não informado'}
+          </div>
+
         </div>
 
         <div class="ag-hora">
@@ -509,32 +515,105 @@ function selecionarAg(id) {
 /* ──────────── AGENDAMENTOS HEMOCENTRO ──────────── */
 
 async function irAgendamentosHemo() {
-  const lista = document.getElementById('lista-agendamentos-hemo');
-  lista.innerHTML = '<div class="empty-state"><div class="empty-icon">⏳</div><p>Carregando...</p></div>';
+
+  const lista =
+    document.getElementById(
+      'lista-agendamentos-hemo'
+    );
+
+  lista.innerHTML = `
+    <div class="empty-state">
+      <div class="empty-icon">⏳</div>
+      <p>Carregando...</p>
+    </div>
+  `;
+
   ir('screen-agendamentos-hemo');
 
+  // busca agendamentos
   const { data: ags, error } = await client
     .from('agendamentos')
     .select('*')
-    .eq('hemocentro_id', hemocentroLogado.id)
-    .order('data', { ascending: true });
+    .eq(
+      'hemocentro_id',
+      hemocentroLogado.id
+    )
+    .order('data', {
+      ascending: true
+    });
 
   if (error || !ags || ags.length === 0) {
-    lista.innerHTML = '<div class="empty-state"><div class="empty-icon">📅</div><p>Nenhum agendamento encontrado.</p></div>';
+
+    lista.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">📅</div>
+        <p>Nenhum agendamento encontrado.</p>
+      </div>
+    `;
+
     return;
   }
 
+  // busca dados dos usuários
+  const emails =
+    ags.map(a => a.usuario_email);
+
+  const { data: usuarios } = await client
+    .from('usuarios')
+    .select('*')
+    .in('email', emails);
+
   lista.innerHTML = ags.map(a => {
-    const [ano, mes, dia] = a.data.split('-');
+
+    const usuario =
+      usuarios.find(
+        u => u.email === a.usuario_email
+      );
+
+    const [ano, mes, dia] =
+      a.data.split('-');
+
     return `
       <div class="agendamento-item">
+
         <div>
-          <div class="ag-date">${dia}/${mes}/${ano}</div>
-          <div class="ag-local">👤 ${a.usuario_email}</div>
+
+          <div class="ag-date">
+            ${dia}/${mes}/${ano}
+          </div>
+
+          <div class="ag-local">
+            👤 ${usuario?.nome || 'Usuário'}
+          </div>
+
+          <div class="ag-info-extra">
+            📧 ${usuario?.email || 'Não informado'}
+          </div>
+
+          <div class="ag-info-extra">
+            🩸 Tipo sanguíneo:
+            ${usuario?.tipo_sanguineo || 'Não informado'}
+          </div>
+
+          <div class="ag-info-extra">
+            🎂 Idade:
+            ${usuario?.idade || 'Não informado'}
+          </div>
+
+          <div class="ag-info-extra">
+            📞 Telefone:
+            ${usuario?.telefone || 'Não informado'}
+          </div>
+
         </div>
-        <div class="ag-hora">${a.horario}</div>
+
+        <div class="ag-hora">
+          ${a.horario}
+        </div>
+
       </div>
     `;
+
   }).join('');
 }
 
