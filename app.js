@@ -555,13 +555,28 @@ async function irAgendamentosHemo() {
   }
 
   // busca dados dos usuários
-  const emails =
-    ags.map(a => a.usuario_email);
+  const emails = [
+  ...new Set(
+    ags
+      .map(a => a.usuario_email)
+      .filter(e => e)
+  )
+];
 
-  const { data: usuarios } = await client
+const { data: usuarios, error: erroUsuarios } =
+  await client
     .from('usuarios')
     .select('*')
     .in('email', emails);
+
+if (erroUsuarios) {
+
+  console.error(erroUsuarios);
+
+  toast('Erro ao carregar usuários!');
+
+  return;
+}
 
   lista.innerHTML = ags.map(a => {
 
