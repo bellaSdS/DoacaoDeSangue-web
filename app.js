@@ -18,7 +18,7 @@ const LIMITE_CRITICO = 5; // bolsas abaixo deste valor disparam alerta
 
 let contrasteAtivo = false;
 
-function ativarContraste() {
+function toggleContraste() {
   contrasteAtivo = !contrasteAtivo;
   document.body.classList.toggle('alto-contraste', contrasteAtivo);
   const btn = document.getElementById('btn-contraste');
