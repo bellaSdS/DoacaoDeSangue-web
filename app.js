@@ -95,68 +95,64 @@ function anunciar(texto) {
 
 function inicializarLeituraAcessivel() {
   
-  // Função única que processa e higieniza o texto do elemento antes de falar
-  function lerElementoAlvo(el) {
+  document.body.addEventListener('mouseover', (e) => {
     if (!audioAtivo) return;
 
-    // Ignora completamente as barras de acessibilidade, modais de carregamento ou telas vazias
-    if (el.closest('.acess-bar') || el.classList.contains('screen') || el.classList.contains('app') || el.classList.contains('empty-state')) {
+    e.stopPropagation();
+
+    const el = e.target;
+
+    if (el.closest('.acess-bar') || el.classList.contains('screen') || el.classList.contains('app')) {
       return;
     }
 
     let textoParaFalar = "";
 
-    // Campos de Texto (Inputs)
     if (el.tagName === 'INPUT') {
       const label = el.previousElementSibling?.tagName === 'LABEL' ? el.previousElementSibling.textContent : "";
       textoParaFalar = `Campo de entrada: ${label}. ${el.placeholder || ''}`;
     } 
-    // Caixas de Seleção (Select)
+  
     else if (el.tagName === 'SELECT') {
       const label = el.previousElementSibling?.tagName === 'LABEL' ? el.previousElementSibling.textContent : "";
       textoParaFalar = `Caixa de seleção: ${label}`;
     } 
-    // Textos puros, botões, títulos, spans, etc.
+
     else {
-      // Pega o texto direto do elemento, sem herdar textos de blocos gigantes ao redor
-      textoParaFalar = el.innerText || el.textContent;
+      textoParaFalar = el.textContent || el.innerText;
     }
 
-    // Regra de segurança: só fala se tiver conteúdo real e se for um texto curto/médio
-    if (textoParaFalar && textoParaFalar.trim().length > 0 && textoParaFalar.length < 200) {
+    if (textoParaFalar.trim().length > 0 && textoParaFalar.length < 300) {
       falar(textoParaFalar.trim());
     }
-  }
-
-  // Usamos um Observador de Mutação (MutationObserver) para monitorar a tela de forma inteligente.
-  // Sempre que uma tela nova abrir ou novos agendamentos/dados surgirem, nós aplicamos o evento neles.
-  const observer = new MutationObserver(() => {
-    // Seleciona elementos de texto e botões interativos
-    const elementos = document.querySelectorAll('button, input, select, a, p, span, strong, h2, h3, .hemo-card-busca, .escolha-card');
-    
-    elementos.forEach(el => {
-      // Remove ouvintes antigos para não duplicar o áudio
-      el.removeEventListener('mouseenter', el._leitorHandler);
-      el.removeEventListener('focus', el._leitorHandler);
-
-      // Cria o novo manipulador de evento isolado
-      el._leitorHandler = (e) => {
-        e.stopPropagation(); // Trava a leitura apenas neste elemento exato
-        lerElementoAlvo(el);
-      };
-
-      // mouseenter garante que SÓ LEIA se o mouse entrar exatamente no limite desse elemento
-      el.addEventListener('mouseenter', el._leitorHandler);
-      el.addEventListener('focus', el._leitorHandler);
-    });
   });
 
-  // Liga o monitoramento na página inteira
-  observer.observe(document.body, { childList: true, subtree: true });
+  // Ouvinte global para navegação via teclado (Teclando TAB)
+  document.body.addEventListener('focusin', (e) => {
+    if (!audioAtivo) return;
+    
+    const el = e.target;
+    let textoParaFalar = "";
+
+    if (el.tagName === 'INPUT') {
+      const label = el.previousElementSibling?.tagName === 'LABEL' ? el.previousElementSibling.textContent : "";
+      textoParaFalar = `Campo de entrada: ${label}. ${el.placeholder || ''}`;
+    } else if (el.tagName === 'SELECT') {
+      const label = el.previousElementSibling?.tagName === 'LABEL' ? el.previousElementSibling.textContent : "";
+      textoParaFalar = `Caixa de seleção: ${label}`;
+    } else {
+      textoParaFalar = el.textContent || el.innerText;
+    }
+
+    if (textoParaFalar.trim().length > 0 && textoParaFalar.length < 300) {
+      falar(textoParaFalar.trim());
+    }
+  });
 }
 
 // Inicializa os ouvintes globais assim que a página carregar
 window.addEventListener('DOMContentLoaded', inicializarLeituraAcessivel);
+
 
 /* ──────────── NAVEGAÇÃO ──────────── */
 
