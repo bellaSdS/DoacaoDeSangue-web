@@ -450,3 +450,7 @@ body.alto-contraste {
 #ag-data::-webkit-calendar-picker-indicator {
     filter: invert(1);
 }
+
+#ag-hora::-webkit-calendar-picker-indicator {
+    filter: invert(1);
+}
