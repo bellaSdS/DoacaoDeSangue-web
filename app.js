@@ -51,95 +51,85 @@ carregarVoz();
 
 function toggleAudio() {
   audioAtivo = !audioAtivo;
-
   const btn = document.getElementById('btn-audio');
   if (btn) {
     btn.setAttribute('aria-pressed', audioAtivo);
     btn.classList.toggle('acess-btn-ativo', audioAtivo);
   }
-
   localStorage.setItem('audio', audioAtivo ? '1' : '0');
-
-  falar(audioAtivo ? 'Narração por voz ativada' : 'Narração por voz desativada', true);
+  if (!audioAtivo && synth) {
+    synth.cancel(); // para imediatamente ao desligar
+  } else {
+    falar(audioAtivo ? 'Narração por voz ativada' : 'Narração por voz desativada');
+  }
 }
 
-function falar(texto, forcar = false) {
-  if ((!audioAtivo && !forcar) || !synth) return;
-
-  if (forcar) {
-    synth.cancel();
-  } 
-  
-  else if (synth.speaking) {
-    return; 
-  }
-
-  const utter = new SpeechSynthesisUtterance(texto);
+function falar(texto) {
+  if (!audioAtivo || !synth || !texto?.trim()) return;
+  synth.cancel();              // descarta fila anterior imediatamente
+  const utter = new SpeechSynthesisUtterance(texto.trim());
   utter.lang = 'pt-BR';
   if (vozPT) utter.voice = vozPT;
-  utter.rate = 1.1; 
-  utter.pitch = 1;
+  utter.rate = 1.1;
   synth.speak(utter);
 }
 
 function anunciar(texto) {
-  const announcer = document.getElementById('aria-announcer');
-  if (announcer) {
-    announcer.textContent = '';
-    setTimeout(() => { announcer.textContent = texto; }, 50);
-  }
-  falar(texto, true);
+  const el = document.getElementById('aria-announcer');
+  if (el) { el.textContent = ''; setTimeout(() => el.textContent = texto, 50); }
+  // anunciar usa falar() normal — áudio ativo determina se fala
+  falar(texto);
 }
 
 /* ──────────── LEITURA DE ACESSIBILIDADE FOCADA POR TELA ──────────── */
 
+let leitorController = null;
+
 function ativarLeitorNaTelaAtual(telaAtiva) {
   if (!telaAtiva) return;
 
-  // Seleciona de forma cirúrgica os elementos de texto e interativos desta tela
-  const elementos = telaAtiva.querySelectorAll('button, input, select, a, p, span, strong, h2, h3, .escolha-card, .hemo-card-busca, .menu-item');
+  // cancela todos os listeners da tela anterior de uma vez
+  if (leitorController) leitorController.abort();
+  leitorController = new AbortController();
+  const signal = leitorController.signal;
 
-  elementos.forEach(el => {
-    // Ignora a barra de acessibilidade fixa do topo e o anunciador invisível
+  const seletores = 'button,input,select,a,p,span,strong,h2,h3,.escolha-card,.hemo-card-busca,.menu-item';
+  telaAtiva.querySelectorAll(seletores).forEach(el => {
     if (el.closest('.acess-bar') || el.id === 'aria-announcer') return;
 
-    // Remove ouvintes antigos para evitar que o áudio fique duplicado ou travado
-    el.onmouseenter = null;
-    el.onfocus = null;
-
-    // Define a ação exata de leitura para o elemento
-    const executarLeitura = (e) => {
-      if (!audioAtivo) return;
-      
-      // Impede de propagar para os blocos ou containers que ficam atrás do texto
-      e.stopPropagation();
-
-      let textoParaFalar = "";
-
-      // Customização inteligente para campos de entrada (Inputs)
+    const obterTexto = () => {
       if (el.tagName === 'INPUT') {
-        const label = el.previousElementSibling?.tagName === 'LABEL' ? el.previousElementSibling.textContent : "";
-        textoParaFalar = `Campo: ${label}. ${el.placeholder || ''}`;
-      } 
-      // Customização para caixas de seleção (Selects)
-      else if (el.tagName === 'SELECT') {
-        const label = el.previousElementSibling?.tagName === 'LABEL' ? el.previousElementSibling.textContent : "";
-        textoParaFalar = `Caixa de seleção: ${label}`;
-      } 
-      // Elementos de texto normais, títulos e botões
-      else {
-        textoParaFalar = el.innerText || el.textContent;
+        const lbl = el.previousElementSibling?.tagName === 'LABEL'
+          ? el.previousElementSibling.textContent : '';
+        return `Campo: ${lbl}. ${el.placeholder || ''}`;
       }
-
-      // Segurança: Só fala se houver texto válido e descarta blocos de layout gigantes
-      if (textoParaFalar && textoParaFalar.trim().length > 0 && textoParaFalar.length < 250) {
-        falar(textoParaFalar.trim());
+      if (el.tagName === 'SELECT') {
+        const lbl = el.previousElementSibling?.tagName === 'LABEL'
+          ? el.previousElementSibling.textContent : '';
+        return `Caixa de seleção: ${lbl}`;
       }
+      return el.innerText || el.textContent || '';
     };
 
-    // Assina os eventos diretamente no escopo do elemento (Leve e imediato)
-    el.onmouseenter = executarLeitura;
-    el.onfocus = executarLeitura;
+    el.addEventListener('mouseenter', (e) => {
+      e.stopPropagation();
+      const txt = obterTexto();
+      if (txt.trim().length > 0 && txt.length < 250) falar(txt.trim());
+    }, { signal });
+
+    el.addEventListener('mouseleave', () => {
+      if (synth) synth.cancel(); // para imediatamente ao sair
+    }, { signal });
+
+    el.addEventListener('focus', (e) => {
+      e.stopPropagation();
+      const txt = obterTexto();
+      if (txt.trim().length > 0 && txt.length < 250) falar(txt.trim());
+    }, { signal });
+
+    el.addEventListener('blur', () => {
+      if (synth) synth.cancel();
+    }, { signal });
   });
 }
 
