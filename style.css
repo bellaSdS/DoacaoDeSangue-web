@@ -257,11 +257,13 @@ hr.divider { border: none; border-top: 1px solid var(--border); margin: 1.25rem 
 }
 
 #ag-data::-webkit-calendar-picker-indicator {
-    filter: invert(0);
+    filter: brightness(0);
+    opacity: 1;
 }
 
 #ag-horario::-webkit-calendar-picker-indicator {
-    filter: invert(0);
+    filter: brightness(0);
+    opacity: 1;
 }
 
 .sr-only {
