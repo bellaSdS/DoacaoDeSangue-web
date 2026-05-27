@@ -26,6 +26,8 @@ function toggleContraste() {
     btn.classList.toggle('acess-btn-ativo', contrasteAtivo);
   }
   localStorage.setItem('contraste', contrasteAtivo ? '1' : '0');
+  // Sempre fala, independente do audioAtivo
+  _falarAgora(contrasteAtivo ? 'Alto contraste ativado' : 'Alto contraste desativado');
 }
 
 /* ──────────── TTS ──────────── */
@@ -59,10 +61,14 @@ function toggleAudio() {
   localStorage.setItem('audio', audioAtivo ? '1' : '0');
 
   if (!audioAtivo) {
-    synth.cancel();
+    // Avisa ANTES de cancelar, para o usuário ouvir a confirmação
+    _falarAgora('Transcrição de áudio desativada');
+    // Cancela qualquer fala em andamento após o aviso terminar
+    setTimeout(() => {
+      if (!audioAtivo) synth.cancel();
+    }, 2000);
   } else {
-    // Fala imediatamente para confirmar a ativação
-    _falarAgora('Narração por voz ativada');
+    _falarAgora('Transcrição de áudio ativada');
   }
 }
 
