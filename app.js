@@ -4,39 +4,35 @@ const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS
 const { createClient } = supabase;
 const client = createClient(supabaseUrl, supabaseKey);
 
-console.log("Supabase conectado");
-
 let usuarioLogado = null;
 let hemocentroLogado = null;
 let agendamentoSelecionado = null;
 let hemocentroSelecionado = null;
 
 const TIPOS_SANGUINEOS = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
-const LIMITE_CRITICO = 5; // bolsas abaixo deste valor disparam alerta
+const LIMITE_CRITICO = 5;
 
-/* ──────────── ACESSIBILIDADE — CONTRASTE DE CORES ──────────── */
+/* ──────────── CONTRASTE ──────────── */
 
-let contrasteAtivo = false;
+let contrasteAtivo = localStorage.getItem('contraste') === '1';
+if (contrasteAtivo) document.body.classList.add('alto-contraste');
 
 function toggleContraste() {
   contrasteAtivo = !contrasteAtivo;
   document.body.classList.toggle('alto-contraste', contrasteAtivo);
   const btn = document.getElementById('btn-contraste');
-  btn.setAttribute('aria-pressed', contrasteAtivo);
-  btn.classList.toggle('acess-btn-ativo', contrasteAtivo);
+  if (btn) {
+    btn.setAttribute('aria-pressed', contrasteAtivo);
+    btn.classList.toggle('acess-btn-ativo', contrasteAtivo);
+  }
   localStorage.setItem('contraste', contrasteAtivo ? '1' : '0');
-  anunciar(contrasteAtivo ? 'Alto contraste ativado' : 'Alto contraste desativado');
 }
 
-// Restaurar preferência de contraste salva
-if (localStorage.getItem('contraste') === '1') {
-  document.body.classList.add('alto-contraste');
-  contrasteAtivo = true;
-}
+/* ──────────── TTS ──────────── */
 
-/* ──────────── ACESSIBILIDADE — TRANSCRIÇÃO DE ÁUDIO (TTS) ──────────── */
+// Restaura preferência salva
+let audioAtivo = localStorage.getItem('audio') === '1';
 
-let audioAtivo = false;
 let synth = window.speechSynthesis;
 let vozPT = null;
 
@@ -49,86 +45,185 @@ function carregarVoz() {
 if (synth.onvoiceschanged !== undefined) synth.onvoiceschanged = carregarVoz;
 carregarVoz();
 
+// Atualiza visual do botão conforme estado atual
+function sincronizarBotaoAudio() {
+  const btn = document.getElementById('btn-audio');
+  if (!btn) return;
+  btn.setAttribute('aria-pressed', audioAtivo);
+  btn.classList.toggle('acess-btn-ativo', audioAtivo);
+}
+
 function toggleAudio() {
   audioAtivo = !audioAtivo;
-  const btn = document.getElementById('btn-audio');
-  if (btn) {
-    btn.setAttribute('aria-pressed', audioAtivo);
-    btn.classList.toggle('acess-btn-ativo', audioAtivo);
-  }
+  sincronizarBotaoAudio();
   localStorage.setItem('audio', audioAtivo ? '1' : '0');
-  if (!audioAtivo && synth) {
-    synth.cancel(); // para imediatamente ao desligar
+
+  if (!audioAtivo) {
+    synth.cancel();
   } else {
-    falar(audioAtivo ? 'Narração por voz ativada' : 'Narração por voz desativada');
+    // Fala imediatamente para confirmar a ativação
+    _falarAgora('Narração por voz ativada');
   }
 }
 
-function falar(texto) {
-  if (!audioAtivo || !synth || !texto?.trim()) return;
-  synth.cancel();              // descarta fila anterior imediatamente
+// Fala interna — sempre executa, independente de audioAtivo
+function _falarAgora(texto) {
+  if (!synth || !texto?.trim()) return;
+  synth.cancel();
   const utter = new SpeechSynthesisUtterance(texto.trim());
   utter.lang = 'pt-BR';
   if (vozPT) utter.voice = vozPT;
   utter.rate = 1.1;
+  utter.pitch = 1;
   synth.speak(utter);
 }
 
+// Fala pública — respeita audioAtivo
+function falar(texto) {
+  if (!audioAtivo) return;
+  _falarAgora(texto);
+}
+
+// Anúncio de sistema (mudança de tela, confirmações) — respeita audioAtivo
 function anunciar(texto) {
   const el = document.getElementById('aria-announcer');
-  if (el) { el.textContent = ''; setTimeout(() => el.textContent = texto, 50); }
-  // anunciar usa falar() normal — áudio ativo determina se fala
+  if (el) {
+    el.textContent = '';
+    setTimeout(() => { el.textContent = texto; }, 50);
+  }
   falar(texto);
 }
 
-/* ──────────── LEITURA DE ACESSIBILIDADE FOCADA POR TELA ──────────── */
+/* ──────────── LEITOR DE TELA POR TELA ──────────── */
 
 let leitorController = null;
+
+// Extrai texto limpo e legível de um elemento,
+// incluindo contexto (label do campo, tipo do elemento, etc.)
+function extrairTextoElemento(el) {
+  // Campos de formulário: lê "Campo [label]: [placeholder ou valor]"
+  if (el.tagName === 'INPUT') {
+    const lbl = el.closest('.form-group')?.querySelector('label')?.textContent?.trim() || '';
+    const val = el.value?.trim();
+    const ph  = el.placeholder || '';
+    if (lbl) return `Campo ${lbl}${val ? ': ' + val : ph ? ', ' + ph : ''}`;
+    return ph ? `Campo: ${ph}` : '';
+  }
+
+  if (el.tagName === 'SELECT') {
+    const lbl = el.closest('.form-group')?.querySelector('label')?.textContent?.trim() || '';
+    const sel = el.options[el.selectedIndex]?.text?.trim() || '';
+    return `${lbl ? lbl + ': ' : 'Seleção: '}${sel || 'nenhuma opção selecionada'}`;
+  }
+
+  if (el.tagName === 'BUTTON') {
+    return el.innerText?.trim() || el.getAttribute('aria-label') || 'Botão';
+  }
+
+  // Para qualquer outro elemento, pega o innerText direto
+  return (el.innerText || el.textContent || '').trim();
+}
+
+// Monta a leitura completa da tela: título + todo o conteúdo visível
+function lerTelaToda(telaAtiva) {
+  if (!telaAtiva) return;
+
+  // Clona para não afetar o DOM real
+  const clone = telaAtiva.cloneNode(true);
+
+  // Remove elementos que não devem ser lidos
+  clone.querySelectorAll(
+    '.acess-bar, .sr-only, script, style, [aria-hidden="true"], #aria-announcer, .modal-overlay, .toast'
+  ).forEach(el => el.remove());
+
+  // Substitui inputs pelo texto do label + placeholder para leitura
+  clone.querySelectorAll('input').forEach(inp => {
+    const lbl = inp.closest('.form-group')?.querySelector('label')?.textContent?.trim() || '';
+    const ph  = inp.placeholder || '';
+    const sub = document.createTextNode(`Campo ${lbl}${ph ? ': ' + ph : ''}. `);
+    inp.replaceWith(sub);
+  });
+
+  // Substitui selects pelo label
+  clone.querySelectorAll('select').forEach(sel => {
+    const lbl = sel.closest('.form-group')?.querySelector('label')?.textContent?.trim() || '';
+    const sub = document.createTextNode(`Seleção ${lbl}. `);
+    sel.replaceWith(sub);
+  });
+
+  // Extrai o texto limpo, colapsando espaços e quebras excessivas
+  const texto = clone.innerText
+    .replace(/\n{3,}/g, '\n\n')   // máximo 2 quebras seguidas
+    .replace(/[ \t]+/g, ' ')        // espaços múltiplos → um
+    .trim();
+
+  return texto;
+}
 
 function ativarLeitorNaTelaAtual(telaAtiva) {
   if (!telaAtiva) return;
 
-  // cancela todos os listeners da tela anterior de uma vez
+  // Cancela listeners da tela anterior
   if (leitorController) leitorController.abort();
   leitorController = new AbortController();
-  const signal = leitorController.signal;
+  const { signal } = leitorController;
 
-  const seletores = 'button,input,select,a,p,span,strong,h2,h3,.escolha-card,.hemo-card-busca,.menu-item';
-  telaAtiva.querySelectorAll(seletores).forEach(el => {
+  // Lê a tela toda automaticamente ao navegar (se áudio ativo)
+  if (audioAtivo) {
+    const textoTela = lerTelaToda(telaAtiva);
+    if (textoTela) {
+      // Pequeno delay para o anúncio de "Tela: X" terminar antes
+      setTimeout(() => falar(textoTela), 800);
+    }
+  }
+
+  // ── Leitura por hover/foco em qualquer elemento com texto ──
+  // Usa TreeWalker para pegar todos os nós de texto visíveis e seus pais
+  const elementosLegiveis = new Set();
+
+  // Adiciona elementos interativos e containers de conteúdo
+  const seletoresAlvo = [
+    'button', 'a', 'input', 'select', 'textarea',
+    // Containers de conteúdo — lê o bloco inteiro de uma vez
+    '.menu-item', '.escolha-card', '.hemo-card-busca',
+    '.agendamento-item', '.info-card', '.estoque-item',
+    '.blood-type-badge', '.blood-badge', '.hemo-alerta-mini',
+    '.alerta-item', '.alerta-ok', '.requisitos',
+    '.perfil-info', '.menu-header',
+    // Textos soltos
+    'h1', 'h2', 'h3', 'h4', 'p', 'label',
+    '.ag-date', '.ag-local', '.ag-info-extra', '.ag-hora',
+    '.hemo-card-nome', '.hemo-card-end', '.hemo-card-hor',
+    '.screen-title', '.section-label',
+    '.estoque-tipo', '.estoque-badge-alerta', '.estoque-badge-ok',
+    '.empty-state',
+  ].join(',');
+
+  telaAtiva.querySelectorAll(seletoresAlvo).forEach(el => {
     if (el.closest('.acess-bar') || el.id === 'aria-announcer') return;
+    elementosLegiveis.add(el);
+  });
 
-    const obterTexto = () => {
-      if (el.tagName === 'INPUT') {
-        const lbl = el.previousElementSibling?.tagName === 'LABEL'
-          ? el.previousElementSibling.textContent : '';
-        return `Campo: ${lbl}. ${el.placeholder || ''}`;
-      }
-      if (el.tagName === 'SELECT') {
-        const lbl = el.previousElementSibling?.tagName === 'LABEL'
-          ? el.previousElementSibling.textContent : '';
-        return `Caixa de seleção: ${lbl}`;
-      }
-      return el.innerText || el.textContent || '';
-    };
-
+  elementosLegiveis.forEach(el => {
     el.addEventListener('mouseenter', (e) => {
       e.stopPropagation();
-      const txt = obterTexto();
-      if (txt.trim().length > 0 && txt.length < 250) falar(txt.trim());
+      const txt = extrairTextoElemento(el);
+      // Limita para não ler blocos imensos de uma vez (leitura por hover)
+      if (txt.length > 0 && txt.length < 400) falar(txt);
     }, { signal });
 
     el.addEventListener('mouseleave', () => {
-      if (synth) synth.cancel(); // para imediatamente ao sair
+      synth.cancel();
     }, { signal });
 
     el.addEventListener('focus', (e) => {
       e.stopPropagation();
-      const txt = obterTexto();
-      if (txt.trim().length > 0 && txt.length < 250) falar(txt.trim());
+      const txt = extrairTextoElemento(el);
+      if (txt.length > 0 && txt.length < 400) falar(txt);
     }, { signal });
 
     el.addEventListener('blur', () => {
-      if (synth) synth.cancel();
+      synth.cancel();
     }, { signal });
   });
 }
@@ -137,26 +232,18 @@ function ativarLeitorNaTelaAtual(telaAtiva) {
 
 function ir(id) {
   const novaTela = document.getElementById(id);
-  
   if (!novaTela) {
-    console.error(`A tela com o ID "${id}" não foi encontrada no HTML.`);
+    console.error(`Tela "${id}" não encontrada.`);
     return;
   }
 
-  // Remove a classe ativa de todas as telas
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  
-  // Exibe a tela desejada
   novaTela.classList.add('active');
 
-  // Busca o título estruturado da tela (.sr-only) ou o primeiro cabeçalho disponível
   const elementoTitulo = novaTela.querySelector('.screen-title') || novaTela.querySelector('h2, h3');
-  const tituloTela = elementoTitulo?.textContent || "Painel Carregado";
-  
-  // Anuncia a mudança de tela de forma limpa
-  anunciar(`Entrou na tela: ${tituloTela}`);
+  const tituloTela = elementoTitulo?.textContent?.trim() || 'Painel';
 
-  // Mapeia os textos e botões especificamente desta tela que acabou de abrir
+  anunciar(`Tela: ${tituloTela}`);
   ativarLeitorNaTelaAtual(novaTela);
 }
 
@@ -169,45 +256,32 @@ function toast(msg, dur = 3000) {
   setTimeout(() => t.classList.remove('show'), dur);
 }
 
+/* ──────────── INIT — registra tela inicial ──────────── */
+
+window.addEventListener('DOMContentLoaded', () => {
+  sincronizarBotaoAudio();
+  // Registra listeners na tela de login que já está ativa
+  const telaInicial = document.querySelector('.screen.active');
+  if (telaInicial) ativarLeitorNaTelaAtual(telaInicial);
+});
+
 /* ──────────── LOGIN ──────────── */
 
 async function fazerLogin() {
   const email = document.getElementById('login-email').value.trim();
   const senha = document.getElementById('login-senha').value;
 
-  console.log("Tentando login:", email, senha);
+  const { data: user } = await client
+    .from('usuarios').select('*')
+    .eq('email', email).eq('senha', senha).maybeSingle();
 
-  const { data: user, error } = await client
-    .from('usuarios')
-    .select('*')
-    .eq('email', email)
-    .eq('senha', senha)
-    .maybeSingle();
+  if (user) { usuarioLogado = user; abrirMain(); return; }
 
-  console.log("USER:", user);
-  console.log("ERROR:", error);
+  const { data: hemo } = await client
+    .from('hemocentros').select('*')
+    .eq('email', email).eq('senha', senha).maybeSingle();
 
-  if (user) {
-    usuarioLogado = user;
-    abrirMain();
-    return;
-  }
-
-  const { data: hemo, error: error2 } = await client
-    .from('hemocentros')
-    .select('*')
-    .eq('email', email)
-    .eq('senha', senha)
-    .maybeSingle();
-
-  console.log("HEMO:", hemo);
-  console.log("ERROR2:", error2);
-
-  if (hemo) {
-    hemocentroLogado = hemo;
-    abrirMainHemo();
-    return;
-  }
+  if (hemo) { hemocentroLogado = hemo; abrirMainHemo(); return; }
 
   toast('Login inválido!');
 }
@@ -222,11 +296,8 @@ function limparLogin() {
 function abrirMain() {
   document.getElementById('main-nome').textContent = usuarioLogado.nome;
   document.getElementById('main-tipo').textContent = usuarioLogado.tipo_sanguineo;
-  
   ir('screen-main');
-
-  const textoBoasVindas = `Olá, ${usuarioLogado.nome}. Bem-vindo ao seu painel. Seu tipo sanguíneo cadastrado é ${usuarioLogado.tipo_sanguineo}.`;
-  anunciar(textoBoasVindas);
+  anunciar(`Olá, ${usuarioLogado.nome}. Tipo sanguíneo: ${usuarioLogado.tipo_sanguineo}.`);
 }
 
 /* ──────────── MAIN HEMOCENTRO ──────────── */
@@ -257,13 +328,9 @@ async function salvarCadastro() {
   const senha     = document.getElementById('cad-senha').value;
   const confirmar = document.getElementById('cad-confirmar').value;
 
-  if (!nome || !idade || !tipo || !telefone || !email || !senha) {
-    toast('Preencha todos os campos!'); return;
-  }
+  if (!nome || !idade || !tipo || !telefone || !email || !senha) { toast('Preencha todos os campos!'); return; }
   if (senha !== confirmar) { toast('As senhas não coincidem!'); return; }
-  if (parseInt(idade) < 16 || parseInt(idade) > 69) {
-    toast('Idade deve ser entre 16 e 69 anos!'); return;
-  }
+  if (parseInt(idade) < 16 || parseInt(idade) > 69) { toast('Idade deve ser entre 16 e 69 anos!'); return; }
 
   const { data: existente } = await client.from('usuarios').select('*').eq('email', email);
   if (existente && existente.length > 0) { toast('E-mail já cadastrado!'); return; }
@@ -303,7 +370,6 @@ async function salvarCadastroHemo() {
   const { data: existente } = await client.from('hemocentros').select('*').eq('email', email);
   if (existente && existente.length > 0) { toast('E-mail já cadastrado!'); return; }
 
-  // Estoque inicial zerado para todos os tipos
   const estoqueInicial = {};
   TIPOS_SANGUINEOS.forEach(t => estoqueInicial[t] = 0);
 
@@ -326,134 +392,58 @@ async function salvarCadastroHemo() {
 let todosHemocentros = [];
 
 async function irBuscarHemocentro() {
-
   document.getElementById('busca-cidade').value = '';
 
-  // Carrega todos os hemocentros
-  const { data, error } = await client
-    .from('hemocentros')
-    .select('*');
-
-  if (error) {
-
-    toast('Erro ao carregar hemocentros!');
-    return;
-  }
+  const { data, error } = await client.from('hemocentros').select('*');
+  if (error) { toast('Erro ao carregar hemocentros!'); return; }
 
   todosHemocentros = data || [];
-
-  // renderiza TODOS
   renderListaHemocentros(todosHemocentros);
-
   ir('screen-buscar-hemo');
 }
 
 function filtrarHemocentros() {
-
-  const termo =
-    document.getElementById('busca-cidade')
-    .value
-    .trim()
-    .toLowerCase();
-
-  // se vazio → mostra todos
-  if (!termo) {
-
-    renderListaHemocentros(todosHemocentros);
-    return;
-  }
+  const termo = document.getElementById('busca-cidade').value.trim().toLowerCase();
+  if (!termo) { renderListaHemocentros(todosHemocentros); return; }
 
   const filtrados = todosHemocentros.filter(h =>
-
-    (h.cidade &&
-      h.cidade.toLowerCase().includes(termo))
-
-    ||
-
-    (h.endereco &&
-      h.endereco.toLowerCase().includes(termo))
-
-    ||
-
-    (h.nome &&
-      h.nome.toLowerCase().includes(termo))
-
-    ||
-
-    (h.estado &&
-      h.estado.toLowerCase().includes(termo))
-
+    (h.cidade    && h.cidade.toLowerCase().includes(termo)) ||
+    (h.endereco  && h.endereco.toLowerCase().includes(termo)) ||
+    (h.nome      && h.nome.toLowerCase().includes(termo)) ||
+    (h.estado    && h.estado.toLowerCase().includes(termo))
   );
-
   renderListaHemocentros(filtrados);
 }
 
 function renderListaHemocentros(listaHemocentros) {
-
-  const lista =
-    document.getElementById('lista-hemocentros');
+  const lista = document.getElementById('lista-hemocentros');
 
   if (!listaHemocentros.length) {
-
-    lista.innerHTML = `
-      <div class="empty-state">
-        <div class="empty-icon">😔</div>
-        <p>Nenhum hemocentro encontrado.</p>
-      </div>
-    `;
-
+    lista.innerHTML = `<div class="empty-state"><div class="empty-icon">😔</div><p>Nenhum hemocentro encontrado.</p></div>`;
     return;
   }
 
   lista.innerHTML = listaHemocentros.map(h => {
-
     const estoque = h.estoque || {};
-
-    const alertas =
-      TIPOS_SANGUINEOS.filter(tipo =>
-        (estoque[tipo] || 0) < LIMITE_CRITICO
-      );
-
+    const alertas = TIPOS_SANGUINEOS.filter(tipo => (estoque[tipo] || 0) < LIMITE_CRITICO);
     const alertaHTML = alertas.length
-      ? `
-        <div class="hemo-alerta-mini">
-          ⚠️ Necessita:
-          ${alertas.join(', ')}
-        </div>
-      `
-      : '';
+      ? `<div class="hemo-alerta-mini">⚠️ Necessita: ${alertas.join(', ')}</div>` : '';
 
     return `
-      <div class="hemo-card-busca"
-           onclick="selecionarHemocentro(${h.id})">
-
+      <div class="hemo-card-busca" onclick="selecionarHemocentro(${h.id})">
         <div class="hemo-card-info">
-
-          <div class="hemo-card-nome">
-            ${h.nome}
-          </div>
-
-          <div class="hemo-card-end">
-            📍 ${h.endereco},
-            ${h.cidade} — ${h.estado}
-          </div>
-
-          <div class="hemo-card-hor">
-            🕐 ${h.horario}
-          </div>
-
+          <div class="hemo-card-nome">${h.nome}</div>
+          <div class="hemo-card-end">📍 ${h.endereco}, ${h.cidade} — ${h.estado}</div>
+          <div class="hemo-card-hor">🕐 ${h.horario}</div>
           ${alertaHTML}
-
         </div>
-
-        <div class="hemo-card-arrow">
-          ›
-        </div>
-
-      </div>
-    `;
-
+        <div class="hemo-card-arrow">›</div>
+      </div>`;
   }).join('');
+
+  // Re-registra listeners nos cards recém-criados
+  const tela = document.getElementById('screen-buscar-hemo');
+  if (tela) ativarLeitorNaTelaAtual(tela);
 }
 
 function selecionarHemocentro(id) {
@@ -465,58 +455,24 @@ function selecionarHemocentro(id) {
 /* ──────────── AGENDAR ──────────── */
 
 function irAgendar() {
-
-  const hoje =
-    new Date().toISOString().split('T')[0];
-
-  document.getElementById('ag-data').min = hoje;
-
+  const hoje = new Date().toISOString().split('T')[0];
+  document.getElementById('ag-data').min   = hoje;
   document.getElementById('ag-data').value = '';
-
   document.getElementById('ag-horario').value = '';
 
   const h = hemocentroSelecionado;
-
-  // ALERTAS DE ESTOQUE
   const estoque = h.estoque || {};
-
-  const alertas =
-    TIPOS_SANGUINEOS.filter(tipo =>
-      (estoque[tipo] || 0) < LIMITE_CRITICO
-    );
-
+  const alertas = TIPOS_SANGUINEOS.filter(tipo => (estoque[tipo] || 0) < LIMITE_CRITICO);
   const alertaHTML = alertas.length
-    ? `
-      <div class="hemo-alerta-mini">
-        ⚠️ Necessita:
-        ${alertas.join(', ')}
-      </div>
-    `
-    : '';
+    ? `<div class="hemo-alerta-mini">⚠️ Necessita: ${alertas.join(', ')}</div>` : '';
 
-  document.getElementById(
-    'hemo-selecionado-info'
-  ).innerHTML = `
-
+  document.getElementById('hemo-selecionado-info').innerHTML = `
     <div class="hemo-card-info">
-
-      <div class="hemo-card-nome">
-        ${h.nome}
-      </div>
-
-      <div class="hemo-card-end">
-        📍 ${h.endereco},
-        ${h.cidade} — ${h.estado}
-      </div>
-
-      <div class="hemo-card-hor">
-        🕐 ${h.horario}
-      </div>
-
+      <div class="hemo-card-nome">${h.nome}</div>
+      <div class="hemo-card-end">📍 ${h.endereco}, ${h.cidade} — ${h.estado}</div>
+      <div class="hemo-card-hor">🕐 ${h.horario}</div>
       ${alertaHTML}
-
-    </div>
-  `;
+    </div>`;
 
   ir('screen-agendar');
 }
@@ -525,20 +481,19 @@ async function confirmarAgendamento() {
   const data    = document.getElementById('ag-data').value;
   const horario = document.getElementById('ag-horario').value;
 
-  if (!data || !horario) { toast('Selecione data e horário!'); return; }
-  if (!hemocentroSelecionado) { toast('Nenhum hemocentro selecionado!'); return; }
+  if (!data || !horario)       { toast('Selecione data e horário!'); return; }
+  if (!hemocentroSelecionado)  { toast('Nenhum hemocentro selecionado!'); return; }
 
   const { error } = await client.from('agendamentos').insert([{
     usuario_email: usuarioLogado.email,
-    data,
-    horario,
-    local: hemocentroSelecionado.nome,
-    endereco: hemocentroSelecionado.endereco,
-    cidade: hemocentroSelecionado.cidade,
-    estado: hemocentroSelecionado.estado,
+    data, horario,
+    local:               hemocentroSelecionado.nome,
+    endereco:            hemocentroSelecionado.endereco,
+    cidade:              hemocentroSelecionado.cidade,
+    estado:              hemocentroSelecionado.estado,
     horario_atendimento: hemocentroSelecionado.horario,
-    telefone: hemocentroSelecionado.telefone,
-    hemocentro_id: hemocentroSelecionado.id
+    telefone:            hemocentroSelecionado.telefone,
+    hemocentro_id:       hemocentroSelecionado.id
   }]);
 
   if (error) { toast('Erro ao agendar!'); return; }
@@ -548,104 +503,45 @@ async function confirmarAgendamento() {
 }
 
 /* ──────────── AGENDAMENTOS DOADOR ──────────── */
+
 async function irAgendamentos() {
-
   agendamentoSelecionado = null;
-
-  const btn =
-    document.getElementById('btn-cancelar-ag');
-
-  if (btn) {
-    btn.style.display = 'none';
-  }
-
+  const btn = document.getElementById('btn-cancelar-ag');
+  if (btn) btn.style.display = 'none';
   await renderAgendamentos();
-
   ir('screen-agendamentos');
 }
 
 async function renderAgendamentos() {
-
-  const lista =
-    document.getElementById(
-      'historico-agendamentos'
-    );
+  const lista = document.getElementById('historico-agendamentos');
 
   const { data: ags, error } = await client
-    .from('agendamentos')
-    .select('*')
-    .eq(
-      'usuario_email',
-      usuarioLogado.email
-    );
+    .from('agendamentos').select('*')
+    .eq('usuario_email', usuarioLogado.email);
 
   if (error || !ags || ags.length === 0) {
-
-    lista.innerHTML = `
-      <div class="empty-state">
-
-        <div class="empty-icon">
-          📅
-        </div>
-
-        <p>
-          Nenhum agendamento encontrado.
-        </p>
-
-      </div>
-    `;
-
+    lista.innerHTML = `<div class="empty-state"><div class="empty-icon">📅</div><p>Nenhum agendamento encontrado.</p></div>`;
     return;
   }
 
   lista.innerHTML = ags.map(a => {
-
-    const [ano, mes, dia] =
-      a.data.split('-');
-
+    const [ano, mes, dia] = a.data.split('-');
     return `
-
-      <div class="agendamento-item"
-           id="ag-item-${a.id}"
-           onclick="selecionarAg(${a.id})">
-
+      <div class="agendamento-item" id="ag-item-${a.id}" onclick="selecionarAg(${a.id})">
         <div>
-
-          <div class="ag-date">
-            ${dia}/${mes}/${ano}
-          </div>
-
-          <div class="ag-local">
-            🏥 ${a.local}
-          </div>
-
-          <div class="ag-info-extra">
-            📍 ${a.endereco || 'Endereço não informado'},
-            ${a.cidade || ''}
-            ${a.estado || ''}
-          </div>
-
-          <div class="ag-info-extra">
-            🕐 Atendimento:
-            ${a.horario_atendimento || 'Não informado'}
-          </div>
-
-          <div class="ag-info-extra">
-            📞 Telefone:
-            ${a.telefone || 'Não informado'}
-          </div>
-
+          <div class="ag-date">${dia}/${mes}/${ano}</div>
+          <div class="ag-local">🏥 ${a.local}</div>
+          <div class="ag-info-extra">📍 ${a.endereco || 'Endereço não informado'}, ${a.cidade || ''} ${a.estado || ''}</div>
+          <div class="ag-info-extra">🕐 Atendimento: ${a.horario_atendimento || 'Não informado'}</div>
+          <div class="ag-info-extra">📞 Telefone: ${a.telefone || 'Não informado'}</div>
         </div>
-
-        <div class="ag-hora">
-          ${a.horario}
-        </div>
-
-      </div>
-
-    `;
-
+        <div class="ag-hora">${a.horario}</div>
+      </div>`;
   }).join('');
+
+  // Re-registra leitor nos itens recém-renderizados
+  const telaAg = document.getElementById('screen-agendamentos');
+  if (telaAg) ativarLeitorNaTelaAtual(telaAg);
 }
 
 function selecionarAg(id) {
@@ -658,121 +554,46 @@ function selecionarAg(id) {
 /* ──────────── AGENDAMENTOS HEMOCENTRO ──────────── */
 
 async function irAgendamentosHemo() {
-
-  const lista =
-    document.getElementById(
-      'lista-agendamentos-hemo'
-    );
-
-  lista.innerHTML = `
-    <div class="empty-state">
-      <div class="empty-icon">⏳</div>
-      <p>Carregando...</p>
-    </div>
-  `;
-
+  const lista = document.getElementById('lista-agendamentos-hemo');
+  lista.innerHTML = `<div class="empty-state"><div class="empty-icon">⏳</div><p>Carregando...</p></div>`;
   ir('screen-agendamentos-hemo');
 
-  // busca agendamentos
   const { data: ags, error } = await client
-    .from('agendamentos')
-    .select('*')
-    .eq(
-      'hemocentro_id',
-      hemocentroLogado.id
-    )
-    .order('data', {
-      ascending: true
-    });
+    .from('agendamentos').select('*')
+    .eq('hemocentro_id', hemocentroLogado.id)
+    .order('data', { ascending: true });
 
   if (error || !ags || ags.length === 0) {
-
-    lista.innerHTML = `
-      <div class="empty-state">
-        <div class="empty-icon">📅</div>
-        <p>Nenhum agendamento encontrado.</p>
-      </div>
-    `;
-
+    lista.innerHTML = `<div class="empty-state"><div class="empty-icon">📅</div><p>Nenhum agendamento encontrado.</p></div>`;
     return;
   }
 
-  // busca dados dos usuários
-  const emails = [
-  ...new Set(
-    ags
-      .map(a => a.usuario_email)
-      .filter(e => e)
-  )
-];
+  const emails = [...new Set(ags.map(a => a.usuario_email).filter(e => e))];
+  const { data: usuarios, error: erroUsuarios } = await client
+    .from('usuarios').select('*').in('email', emails);
 
-const { data: usuarios, error: erroUsuarios } =
-  await client
-    .from('usuarios')
-    .select('*')
-    .in('email', emails);
-
-if (erroUsuarios) {
-
-  console.error(erroUsuarios);
-
-  toast('Erro ao carregar usuários!');
-
-  return;
-}
+  if (erroUsuarios) { console.error(erroUsuarios); toast('Erro ao carregar usuários!'); return; }
 
   lista.innerHTML = ags.map(a => {
-
-    const usuario =
-      usuarios.find(
-        u => u.email === a.usuario_email
-      );
-
-    const [ano, mes, dia] =
-      a.data.split('-');
-
+    const usuario = usuarios.find(u => u.email === a.usuario_email);
+    const [ano, mes, dia] = a.data.split('-');
     return `
       <div class="agendamento-item">
-
         <div>
-
-          <div class="ag-date">
-            ${dia}/${mes}/${ano}
-          </div>
-
-          <div class="ag-local">
-            👤 ${usuario?.nome || 'Usuário'}
-          </div>
-
-          <div class="ag-info-extra">
-            📧 ${usuario?.email || 'Não informado'}
-          </div>
-
-          <div class="ag-info-extra">
-            🩸 Tipo sanguíneo:
-            ${usuario?.tipo_sanguineo || 'Não informado'}
-          </div>
-
-          <div class="ag-info-extra">
-            🎂 Idade:
-            ${usuario?.idade || 'Não informado'}
-          </div>
-
-          <div class="ag-info-extra">
-            📞 Telefone:
-            ${usuario?.telefone || 'Não informado'}
-          </div>
-
+          <div class="ag-date">${dia}/${mes}/${ano}</div>
+          <div class="ag-local">👤 ${usuario?.nome || 'Usuário'}</div>
+          <div class="ag-info-extra">📧 ${usuario?.email || 'Não informado'}</div>
+          <div class="ag-info-extra">🩸 Tipo sanguíneo: ${usuario?.tipo_sanguineo || 'Não informado'}</div>
+          <div class="ag-info-extra">🎂 Idade: ${usuario?.idade || 'Não informado'}</div>
+          <div class="ag-info-extra">📞 Telefone: ${usuario?.telefone || 'Não informado'}</div>
         </div>
-
-        <div class="ag-hora">
-          ${a.horario}
-        </div>
-
-      </div>
-    `;
-
+        <div class="ag-hora">${a.horario}</div>
+      </div>`;
   }).join('');
+
+  // Re-registra leitor nos cards recém-renderizados
+  const telaHemoAg = document.getElementById('screen-agendamentos-hemo');
+  if (telaHemoAg) ativarLeitorNaTelaAtual(telaHemoAg);
 }
 
 /* ──────────── CANCELAR AGENDAMENTO ──────────── */
@@ -794,11 +615,11 @@ async function cancelarAgendamento() {
 function irPerfil() {
   const u = usuarioLogado;
   const iniciais = u.nome.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase();
-  document.getElementById('perfil-avatar').textContent = iniciais;
-  document.getElementById('perfil-nome').textContent = u.nome;
-  document.getElementById('perfil-email').textContent = u.email;
-  document.getElementById('perfil-tipo').textContent = u.tipo_sanguineo;
-  document.getElementById('perfil-idade').textContent = u.idade + ' anos';
+  document.getElementById('perfil-avatar').textContent   = iniciais;
+  document.getElementById('perfil-nome').textContent     = u.nome;
+  document.getElementById('perfil-email').textContent    = u.email;
+  document.getElementById('perfil-tipo').textContent     = u.tipo_sanguineo;
+  document.getElementById('perfil-idade').textContent    = u.idade + ' anos';
   document.getElementById('perfil-telefone').textContent = u.telefone;
   ir('screen-perfil');
 }
@@ -806,42 +627,22 @@ function irPerfil() {
 /* ──────────── PERFIL HEMOCENTRO ──────────── */
 
 async function irPerfilHemo() {
-
   const { data: hemo } = await client
-    .from('hemocentros')
-    .select('*')
-    .eq('id', hemocentroLogado.id)
-    .maybeSingle();
-
+    .from('hemocentros').select('*').eq('id', hemocentroLogado.id).maybeSingle();
   if (hemo) hemocentroLogado = hemo;
 
   const h = hemocentroLogado;
+  const iniciais = h.nome.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase();
 
-  const iniciais = h.nome
-    .split(' ')
-    .map(n => n[0])
-    .slice(0, 2)
-    .join('')
-    .toUpperCase();
-
-  // VERIFICA se os elementos existem antes de usar
-  const avatar = document.getElementById('hemo-avatar-initials');
-  const nome = document.getElementById('hemo-perfil-nome');
-  const endereco = document.getElementById('hemo-perfil-endereco');
-  const cidade = document.getElementById('hemo-perfil-cidade');
-  const resp = document.getElementById('hemo-perfil-resp');
-  const tel = document.getElementById('hemo-perfil-tel');
-  const horario = document.getElementById('hemo-perfil-horario');
-  const email = document.getElementById('hemo-perfil-email');
-
-  if (avatar) avatar.textContent = iniciais;
-  if (nome) nome.textContent = h.nome;
-  if (endereco) endereco.textContent = h.endereco;
-  if (cidade) cidade.textContent = h.cidade + ' — ' + h.estado;
-  if (resp) resp.textContent = h.responsavel;
-  if (tel) tel.textContent = h.telefone;
-  if (horario) horario.textContent = h.horario;
-  if (email) email.textContent = h.email;
+  const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+  set('hemo-avatar-initials', iniciais);
+  set('hemo-perfil-nome',     h.nome);
+  set('hemo-perfil-endereco', h.endereco);
+  set('hemo-perfil-cidade',   h.cidade + ' — ' + h.estado);
+  set('hemo-perfil-resp',     h.responsavel);
+  set('hemo-perfil-tel',      h.telefone);
+  set('hemo-perfil-horario',  h.horario);
+  set('hemo-perfil-email',    h.email);
 
   ir('screen-perfil-hemo');
 }
@@ -849,67 +650,35 @@ async function irPerfilHemo() {
 /* ──────────── EDITAR HEMOCENTRO ──────────── */
 
 function irEditarHemo() {
-
   const h = hemocentroLogado;
-
-  const nome = document.getElementById('edit-hemo-nome');
-  const responsavel = document.getElementById('edit-hemo-responsavel');
-  const telefone = document.getElementById('edit-hemo-telefone');
-  const endereco = document.getElementById('edit-hemo-endereco');
-  const cidade = document.getElementById('edit-hemo-cidade');
-  const estado = document.getElementById('edit-hemo-estado');
-  const horario = document.getElementById('edit-hemo-horario');
-
-  if (nome) nome.value = h.nome;
-  if (responsavel) responsavel.value = h.responsavel;
-  if (telefone) telefone.value = h.telefone;
-  if (endereco) endereco.value = h.endereco;
-  if (cidade) cidade.value = h.cidade;
-  if (estado) estado.value = h.estado;
-  if (horario) horario.value = h.horario;
-
+  const set = (id, val) => { const el = document.getElementById(id); if (el) el.value = val; };
+  set('edit-hemo-nome',        h.nome);
+  set('edit-hemo-responsavel', h.responsavel);
+  set('edit-hemo-telefone',    h.telefone);
+  set('edit-hemo-endereco',    h.endereco);
+  set('edit-hemo-cidade',      h.cidade);
+  set('edit-hemo-estado',      h.estado);
+  set('edit-hemo-horario',     h.horario);
   ir('screen-editar-hemo');
 }
 
-/* ──────────── SALVAR EDIÇÃO HEMOCENTRO ──────────── */
 async function salvarEdicaoHemo() {
+  const get = id => document.getElementById(id).value;
+  const nome        = get('edit-hemo-nome');
+  const responsavel = get('edit-hemo-responsavel');
+  const telefone    = get('edit-hemo-telefone');
+  const endereco    = get('edit-hemo-endereco');
+  const cidade      = get('edit-hemo-cidade');
+  const estado      = get('edit-hemo-estado');
+  const horario     = get('edit-hemo-horario');
 
-  const nome = document.getElementById('edit-hemo-nome').value;
-  const responsavel = document.getElementById('edit-hemo-responsavel').value;
-  const telefone = document.getElementById('edit-hemo-telefone').value;
-  const endereco = document.getElementById('edit-hemo-endereco').value;
-  const cidade = document.getElementById('edit-hemo-cidade').value;
-  const estado = document.getElementById('edit-hemo-estado').value;
-  const horario = document.getElementById('edit-hemo-horario').value;
-
-  const { error } = await client
-    .from('hemocentros')
-    .update({
-      nome,
-      responsavel,
-      telefone,
-      endereco,
-      cidade,
-      estado,
-      horario
-    })
+  const { error } = await client.from('hemocentros')
+    .update({ nome, responsavel, telefone, endereco, cidade, estado, horario })
     .eq('id', hemocentroLogado.id);
 
-  if (error) {
-    toast('Erro ao atualizar hemocentro!');
-    return;
-  }
+  if (error) { toast('Erro ao atualizar hemocentro!'); return; }
 
-  Object.assign(hemocentroLogado, {
-    nome,
-    responsavel,
-    telefone,
-    endereco,
-    cidade,
-    estado,
-    horario
-  });
-
+  Object.assign(hemocentroLogado, { nome, responsavel, telefone, endereco, cidade, estado, horario });
   toast('Perfil atualizado!');
   irPerfilHemo();
 }
@@ -917,209 +686,100 @@ async function salvarEdicaoHemo() {
 /* ──────────── EXCLUIR HEMOCENTRO ──────────── */
 
 async function excluirHemocentro() {
-
-  const confirmar = confirm(
-    'Tem certeza que deseja excluir o hemocentro? Esta ação não pode ser desfeita.'
-  );
-
+  const confirmar = confirm('Tem certeza que deseja excluir o hemocentro? Esta ação não pode ser desfeita.');
   if (!confirmar) return;
 
-  // Remove agendamentos vinculados
-  await client
-    .from('agendamentos')
-    .delete()
-    .eq('hemocentro_id', hemocentroLogado.id);
+  await client.from('agendamentos').delete().eq('hemocentro_id', hemocentroLogado.id);
+  const { error } = await client.from('hemocentros').delete().eq('id', hemocentroLogado.id);
 
-  // Remove hemocentro
-  const { error } = await client
-    .from('hemocentros')
-    .delete()
-    .eq('id', hemocentroLogado.id);
-
-  if (error) {
-    toast('Erro ao excluir hemocentro!');
-    return;
-  }
+  if (error) { toast('Erro ao excluir hemocentro!'); return; }
 
   toast('Hemocentro removido com sucesso!');
-
   hemocentroLogado = null;
-
-  setTimeout(() => {
-    ir('screen-login');
-  }, 1500);
+  setTimeout(() => ir('screen-login'), 1500);
 }
 
-/* ──────────── ESTOQUE HEMOCENTRO ──────────── */
-function abrirEstoque(){
+/* ──────────── ESTOQUE ──────────── */
 
+function abrirEstoque() {
   renderEstoque();
   renderAlertasEstoque();
-
   ir('screen-estoque');
 }
 
 function renderEstoque() {
-
-  const grid = document.getElementById('estoque-grid');
-
+  const grid    = document.getElementById('estoque-grid');
   const estoque = hemocentroLogado.estoque || {};
 
   grid.innerHTML = TIPOS_SANGUINEOS.map(tipo => {
-
-    const qtd = estoque[tipo];
-
+    const qtd    = estoque[tipo] ?? 0;
     const critico = qtd < LIMITE_CRITICO;
-
     return `
       <div class="estoque-item ${critico ? 'critico' : ''}">
-
-        <div class="estoque-tipo">
-          ${tipo}
-        </div>
-
-        <div class="${critico ? 'estoque-badge-alerta' : 'estoque-badge-ok'}">
-          ${critico ? 'Crítico' : 'Normal'}
-        </div>
-
+        <div class="estoque-tipo">${tipo}</div>
+        <div class="${critico ? 'estoque-badge-alerta' : 'estoque-badge-ok'}">${critico ? 'Crítico' : 'Normal'}</div>
         <div class="estoque-controles">
-
-          <button class="est-btn"
-                  onclick="alterarEstoque('${tipo}', -1)">
-            −
-          </button>
-
-          <input type="number"
-                 id="estoque-${tipo}"
-                 class="est-input ${critico ? 'est-input-critico' : ''}"
-                  value="${qtd ?? ''}"
-                 min="0">
-
-          <button class="est-btn"
-                  onclick="alterarEstoque('${tipo}', 1)">
-            +
-          </button>
-
+          <button class="est-btn" onclick="alterarEstoque('${tipo}', -1)">−</button>
+          <input type="number" id="estoque-${tipo}" class="est-input ${critico ? 'est-input-critico' : ''}" value="${qtd}" min="0">
+          <button class="est-btn" onclick="alterarEstoque('${tipo}', 1)">+</button>
         </div>
-
-      </div>
-    `;
+      </div>`;
   }).join('');
 }
 
 function alterarEstoque(tipo, valor) {
-
   const input = document.getElementById(`estoque-${tipo}`);
-
   let qtd = parseInt(input.value) || 0;
-
-  qtd += valor;
-
-  if (qtd < 0) qtd = 0;
-
+  qtd = Math.max(0, qtd + valor);
   input.value = qtd;
 }
 
 async function salvarEstoque() {
-
   const novoEstoque = {};
-
   TIPOS_SANGUINEOS.forEach(tipo => {
-
-    novoEstoque[tipo] =
-      parseInt(
-        document.getElementById(`estoque-${tipo}`).value
-      ) || 0;
-
+    novoEstoque[tipo] = parseInt(document.getElementById(`estoque-${tipo}`).value) || 0;
   });
 
-  // salva no banco
-  const { error } = await client
-    .from('hemocentros')
-    .update({
-      estoque: novoEstoque
-    })
-    .eq('id', hemocentroLogado.id);
+  const { error } = await client.from('hemocentros')
+    .update({ estoque: novoEstoque }).eq('id', hemocentroLogado.id);
 
-  // erro
-  if (error) {
+  if (error) { toast('Erro ao salvar estoque!'); return; }
 
-    toast('Erro ao salvar estoque!');
-    return;
-  }
-
-  // atualiza objeto local
   hemocentroLogado.estoque = novoEstoque;
-
-  // rerender
   renderEstoque();
   renderAlertasEstoque();
+  // Re-registra leitor após re-render do estoque
+  const telaEst = document.getElementById('screen-estoque');
+  if (telaEst) ativarLeitorNaTelaAtual(telaEst);
 
-  // mensagem visual
-  const msg =
-    document.getElementById("mensagem-estoque");
+  const msg = document.getElementById('mensagem-estoque');
+  msg.innerHTML = '✅ Estoque atualizado com sucesso!';
+  msg.classList.add('show');
+  setTimeout(() => msg.classList.remove('show'), 3000);
 
-  msg.innerHTML =
-    "✅ Estoque atualizado com sucesso!";
-
-  msg.classList.add("show");
-
-  setTimeout(() => {
-
-    msg.classList.remove("show");
-
-  }, 3000);
-
-  // toast
   toast('Estoque atualizado!');
 }
 
 function renderAlertasEstoque() {
+  const container     = document.getElementById('alertas-estoque');
+  const estoque       = hemocentroLogado.estoque || {};
+  const tiposCriticos = TIPOS_SANGUINEOS.filter(tipo => (estoque[tipo] || 0) < LIMITE_CRITICO);
 
-  const container =
-    document.getElementById('alertas-estoque');
-
-  const estoque =
-    hemocentroLogado.estoque || {};
-
-  const tiposCriticos =
-    TIPOS_SANGUINEOS.filter(tipo => {
-
-      return (estoque[tipo] || 0) < LIMITE_CRITICO;
-
-    });
-
-  // sem alertas
   if (tiposCriticos.length === 0) {
-
-    container.innerHTML = `
-      <div class="alerta-ok">
-        ✅ Todos os estoques estão normais.
-      </div>
-    `;
-
+    container.innerHTML = `<div class="alerta-ok">✅ Todos os estoques estão normais.</div>`;
     return;
   }
-
-  // com alertas
-  container.innerHTML = tiposCriticos.map(tipo => {
-
-    return `
-      <div class="alerta-item">
-        ⚠️ Estoque crítico:
-        <strong>${tipo}</strong>
-      </div>
-    `;
-
-  }).join('');
+  container.innerHTML = tiposCriticos.map(tipo =>
+    `<div class="alerta-item">⚠️ Estoque crítico: <strong>${tipo}</strong></div>`
+  ).join('');
 }
 
 /* ──────────── EDITAR PERFIL DOADOR ──────────── */
 
 function irEditarPerfil() {
-  document.getElementById('edit-nome').value = usuarioLogado.nome;
-  document.getElementById('edit-idade').value = usuarioLogado.idade;
-  document.getElementById('edit-tipo').value = usuarioLogado.tipo_sanguineo;
+  document.getElementById('edit-nome').value     = usuarioLogado.nome;
+  document.getElementById('edit-idade').value    = usuarioLogado.idade;
+  document.getElementById('edit-tipo').value     = usuarioLogado.tipo_sanguineo;
   document.getElementById('edit-telefone').value = usuarioLogado.telefone;
   ir('screen-editar-perfil');
 }
@@ -1130,8 +790,7 @@ async function salvarEdicao() {
   const tipo     = document.getElementById('edit-tipo').value;
   const telefone = document.getElementById('edit-telefone').value;
 
-  const { error } = await client
-    .from('usuarios')
+  const { error } = await client.from('usuarios')
     .update({ nome, idade, tipo_sanguineo: tipo, telefone })
     .eq('email', usuarioLogado.email);
 
